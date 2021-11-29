@@ -518,6 +518,13 @@ static parserStatus_e processTxInternal(txContext_t *context) {
         // `USTREAM_FINISHED` preemptively. Case number 2 should NOT happen as it is up to
         // `ledgerjs` to correctly decrease the size of the APDU (`commandLength`) so that this
         // situation doesn't happen.
+
+        PRINTF("!! context->txType: %x\n", context->txType);
+        PRINTF("!! LEGACY: %x\n", LEGACY);
+        PRINTF("!! context->currentField: %x\n", context->currentField);
+        PRINTF("!! LEGACY_RLP_V: %x\n", LEGACY_RLP_V);
+        PRINTF("!! context->commandLength: %x\n", context->commandLength);
+
         if ((context->txType == LEGACY && context->currentField == LEGACY_RLP_V) &&
             (context->commandLength == 0)) {
             context->content->vLength = 0;
@@ -596,7 +603,7 @@ parserStatus_e processTx(txContext_t *context,
             context->commandLength = length;
             context->processingFlags = processingFlags;
             result = processTxInternal(context);
-            PRINTF("result: %d\n");
+            PRINTF("result: %d\n", result);
         }
         CATCH_OTHER(e) {
             result = USTREAM_FAULT;

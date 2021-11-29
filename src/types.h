@@ -7,6 +7,12 @@
 #include "transaction/types.h"
 #include "common/bip32.h"
 
+
+////////////////////
+#define P1_FIRST                            0x00
+#define P1_MORE                             0x80
+//////////////////////////////////////
+
 /**
  * Enumeration for the status of IO.
  */
@@ -23,7 +29,8 @@ typedef enum {
     GET_VERSION = 0x03,     /// version of the application
     GET_APP_NAME = 0x04,    /// name of the application
     GET_PUBLIC_KEY = 0x05,  /// public key of corresponding BIP32 path
-    SIGN_TX = 0x06          /// sign transaction with BIP32 path
+    SIGN_TX = 0x06,         /// sign transaction with BIP32 path
+    SIGN_TX2 = 0x07         /// sign transaction with BIP32 path
 } command_e;
 
 /**

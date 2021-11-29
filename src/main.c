@@ -29,12 +29,25 @@
 #include "apdu/parser.h"
 #include "apdu/dispatcher.h"
 
+///////////////////////
+#include "shared_context.h";
+///////////////////////
+
 uint8_t G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
 io_state_e G_io_state;
 ux_state_t G_ux;
 bolos_ux_params_t G_ux_params;
 global_ctx_t G_context;
 const internalStorage_t N_storage_real;
+
+///////////////////////
+tmpCtx_t tmpCtx;
+txContext_t txContext;
+tmpContent_t tmpContent;
+cx_sha3_t global_sha3;
+uint8_t appState;
+strings_t strings;
+///////////////////////
 
 void init_storage() {
     if (N_storage.initialized != 0x01) {
@@ -49,6 +62,33 @@ void init_storage() {
         );
     }
 }
+
+// TODO!!!!
+// call in loop
+void reset_app_context() {
+    appState = APP_STATE_IDLE;
+//     called_from_swap = false;
+//     pluginType = OLD_INTERNAL;
+// #ifdef HAVE_STARKWARE
+//     quantumSet = false;
+// #endif
+// #ifdef HAVE_ETH2
+//     eth2WithdrawalIndex = 0;
+// #endif
+    memset((uint8_t *) &tmpCtx, 0, sizeof(tmpCtx));
+    memset((uint8_t *) &txContext, 0, sizeof(txContext));
+    memset((uint8_t *) &tmpContent, 0, sizeof(tmpContent));
+}
+
+// // TODO: use ui_menu_main instead
+// void ui_idle(void) {
+//     // reserve a display stack slot if none yet
+//     if (G_ux.stack_count == 0) {
+//         ux_stack_push();
+//     }
+//     // ux_flow_init(0, ux_idle_flow, NULL);
+//     ux_flow_init(0, ux_menu_main_flow, NULL);
+// }
 
 
 /**
