@@ -102,8 +102,6 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more) {
             parserStatus_e txResult = processTx(&txContext,
                          &txContext.workBuffer,
                         //  dataLength,
-                        0,
-                        //  (chainConfig->kind == CHAIN_KIND_WANCHAIN ? TX_FLAG_TYPE : 0));
                         0);
 
             ///////////////////////////////////////////////
@@ -183,23 +181,6 @@ int handler_sign_tx2(uint8_t p1,
 
         initTx(&txContext, &global_sha3, &tmpContent.txContent, /*customProcessor*/ NULL, NULL);
 
-        // EIP 2718: TransactionType might be present before the TransactionPayload.
-        uint8_t txType = *workBuffer;
-        if (txType >= MIN_TX_TYPE && txType <= MAX_TX_TYPE) {
-            // Enumerate through all supported txTypes here...
-            if (txType == EIP2930 || txType == EIP1559) {
-                cx_hash((cx_hash_t *) &global_sha3, 0, workBuffer, 1, NULL, 0);
-                txContext.txType = txType;
-                workBuffer++;
-                dataLength--;
-            } else {
-                PRINTF("Transaction type %d not supported\n", txType);
-                THROW(0x6501);
-            }
-        } else {
-            txContext.txType = LEGACY;
-        }
-        PRINTF("TxType: %x\n", txContext.txType);
     } else if (p1 != P1_MORE) {
         THROW(0x6B00);
     }
@@ -216,9 +197,7 @@ int handler_sign_tx2(uint8_t p1,
     }
     txResult = processTx(&txContext,
                          workBuffer,
-                         dataLength,
-                        //  (chainConfig->kind == CHAIN_KIND_WANCHAIN ? TX_FLAG_TYPE : 0));
-                        0);
+                         dataLength);
 
     PRINTF("Nonce %.*H\n", tmpContent.txContent.nonce.length, tmpContent.txContent.nonce.value);
     PRINTF("Gas price %.*H\n", tmpContent.txContent.gasprice.length, tmpContent.txContent.gasprice.value);
@@ -602,34 +581,27 @@ unsigned int io_seproxyhal_touch_tx_ok(__attribute__((unused)) const bagl_elemen
     ////////////////////////
 
     explicit_bzero(&privateKey, sizeof(privateKey));
-    // if (txContext.txType == EIP1559 || txContext.txType == EIP2930) {
-    //     if (info & CX_ECCINFO_PARITY_ODD) {
-    //         G_io_apdu_buffer[0] = 1;
-    //     } else {
-    //         G_io_apdu_buffer[0] = 0;
-    //     }
-    // } else {
-        // Parity is present in the sequence tag in the legacy API
-        if (tmpContent.txContent.vLength == 0) {
-            // Legacy API
-            G_io_apdu_buffer[0] = 27;
-        } else {
-            // New API
-            // Note that this is wrong for a large v, but ledgerjs will recover.
 
-            // Taking only the 4 highest bytes to not introduce breaking changes. In the future,
-            // this should be updated.
-            uint32_t v = (uint32_t) u64_from_BE(tmpContent.txContent.v,
-                                                MIN(4, tmpContent.txContent.vLength));
-            G_io_apdu_buffer[0] = (v * 2) + 35;
-        }
-        if (info & CX_ECCINFO_PARITY_ODD) {
-            G_io_apdu_buffer[0]++;
-        }
-        if (info & CX_ECCINFO_xGTn) {
-            G_io_apdu_buffer[0] += 2;
-        }
-    // }
+    if (tmpContent.txContent.vLength == 0) {
+        // Legacy API
+        G_io_apdu_buffer[0] = 27;
+    } else {
+        // New API
+        // Note that this is wrong for a large v, but ledgerjs will recover.
+
+        // Taking only the 4 highest bytes to not introduce breaking changes. In the future,
+        // this should be updated.
+        uint32_t v = (uint32_t) u64_from_BE(tmpContent.txContent.v,
+                                            MIN(4, tmpContent.txContent.vLength));
+        G_io_apdu_buffer[0] = (v * 2) + 35;
+    }
+    if (info & CX_ECCINFO_PARITY_ODD) {
+        G_io_apdu_buffer[0]++;
+    }
+    if (info & CX_ECCINFO_xGTn) {
+        G_io_apdu_buffer[0] += 2;
+    }
+
     format_signature_out(signature);
     tx = 65;
     G_io_apdu_buffer[tx++] = 0x90;
@@ -670,6 +642,13 @@ UX_STEP_NOCB(
     {
       .title = "Amount",
       .text = strings.common.fullAmount
+    });
+UX_STEP_NOCB(
+    ux_approval_nonce_step,
+    bnnn_paging,
+    {
+      .title = "Nonce",
+      .text = strings.common.nonce
     });
 UX_STEP_NOCB(
     ux_approval_address_step,
@@ -725,6 +704,7 @@ void ux_approve_tx(bool fromPlugin) {
         // We're in a regular transaction, just show the amount and the address
         ux_approval_tx_flow[step++] = &ux_approval_amount_step;
         ux_approval_tx_flow[step++] = &ux_approval_address_step;
+        ux_approval_tx_flow[step++] = &ux_approval_nonce_step;
     // }
 
     // if (N_storage.displayNonce) {

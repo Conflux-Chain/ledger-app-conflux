@@ -102,26 +102,6 @@ static void processAccessList(txContext_t *context) {
     }
 }
 
-static void processType(txContext_t *context) {
-    if (context->currentFieldIsList) {
-        PRINTF("Invalid type for RLP_TYPE\n");
-        THROW(EXCEPTION);
-    }
-    if (context->currentFieldLength > MAX_INT256) {
-        PRINTF("Invalid length for RLP_TYPE\n");
-        THROW(EXCEPTION);
-    }
-    if (context->currentFieldPos < context->currentFieldLength) {
-        uint32_t copySize =
-            MIN(context->commandLength, context->currentFieldLength - context->currentFieldPos);
-        copyTxData(context, NULL, copySize);
-    }
-    if (context->currentFieldPos == context->currentFieldLength) {
-        context->currentField++;
-        context->processingField = false;
-    }
-}
-
 static void processChainID(txContext_t *context) {
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_CHAINID\n");
@@ -373,149 +353,43 @@ static void processV(txContext_t *context) {
     }
 }
 
-static bool processEIP1559Tx(txContext_t *context) {
+static bool processConfluxTx(txContext_t *context) {
     switch (context->currentField) {
-        case EIP1559_RLP_CONTENT: {
+        case CONFLUX_RLP_CONTENT:
             processContent(context);
-            if ((context->processingFlags & TX_FLAG_TYPE) == 0) {
-                context->currentField++;
-            }
             break;
-        }
-        // This gets hit only by Wanchain
-        case EIP1559_RLP_TYPE: {
-            processType(context);
-            break;
-        }
-        case EIP1559_RLP_CHAINID: {
-            processChainID(context);
-            break;
-        }
-        case EIP1559_RLP_NONCE: {
+        case CONFLUX_RLP_NONCE:
             processNonce(context);
             break;
-        }
-        case EIP1559_RLP_MAX_FEE_PER_GAS: {
+        case CONFLUX_RLP_GASPRICE:
             processGasprice(context);
             break;
-        }
-        case EIP1559_RLP_GASLIMIT: {
-            processGasLimit(context);
-            break;
-        }
-        case EIP1559_RLP_TO: {
-            processTo(context);
-            break;
-        }
-        case EIP1559_RLP_VALUE: {
-            processValue(context);
-            break;
-        }
-        case EIP1559_RLP_DATA: {
-            processData(context);
-            break;
-        }
-        case EIP1559_RLP_ACCESS_LIST: {
-            processAccessList(context);
-            break;
-        }
-        case EIP1559_RLP_MAX_PRIORITY_FEE_PER_GAS:
-            processAndDiscard(context);
-            break;
-        default:
-            PRINTF("Invalid RLP decoder context\n");
-            return true;
-    }
-    return false;
-}
-
-static bool processEIP2930Tx(txContext_t *context) {
-    switch (context->currentField) {
-        case EIP2930_RLP_CONTENT:
-            processContent(context);
-            if ((context->processingFlags & TX_FLAG_TYPE) == 0) {
-                context->currentField++;
-            }
-            break;
-        // This gets hit only by Wanchain
-        case EIP2930_RLP_TYPE:
-            processType(context);
-            break;
-        case EIP2930_RLP_CHAINID:
-            processChainID(context);
-            break;
-        case EIP2930_RLP_NONCE:
-            processNonce(context);
-            break;
-        case EIP2930_RLP_GASPRICE:
-            processGasprice(context);
-            break;
-        case EIP2930_RLP_GASLIMIT:
-            processGasLimit(context);
-            break;
-        case EIP2930_RLP_TO:
-            processTo(context);
-            break;
-        case EIP2930_RLP_VALUE:
-            processValue(context);
-            break;
-        case EIP2930_RLP_DATA:
-            processData(context);
-            break;
-        case EIP2930_RLP_ACCESS_LIST:
-            processAccessList(context);
-            break;
-        default:
-            PRINTF("Invalid RLP decoder context\n");
-            return true;
-    }
-    return false;
-}
-
-static bool processLegacyTx(txContext_t *context) {
-    switch (context->currentField) {
-        case LEGACY_RLP_CONTENT:
-            processContent(context);
-            if ((context->processingFlags & TX_FLAG_TYPE) == 0) {
-                context->currentField++;
-            }
-            break;
-        // This gets hit only by Wanchain
-        case LEGACY_RLP_TYPE:
-            processType(context);
-            break;
-        case LEGACY_RLP_NONCE:
-            processNonce(context);
-            break;
-        case LEGACY_RLP_GASPRICE:
-            processGasprice(context);
-            break;
-        case LEGACY_RLP_STARTGAS:
+        case CONFLUX_RLP_STARTGAS:
             processStartGas(context);
             break;
-        case LEGACY_RLP_TO:
+        case CONFLUX_RLP_TO:
             processTo(context);
             break;
-        case LEGACY_RLP_VALUE:
+        case CONFLUX_RLP_VALUE:
             processValue(context);
             break;
-        case LEGACY_RLP_STORAGE_LIMIT:
+        case CONFLUX_RLP_STORAGE_LIMIT:
             processStorageLimit(context);
             break;
-        case LEGACY_RLP_EPOCH_HEIGHT:
+        case CONFLUX_RLP_EPOCH_HEIGHT:
             processEpochHeight(context);
             break;
-        case LEGACY_RLP_CHAIN_ID:
+        case CONFLUX_RLP_CHAIN_ID:
             processChainIDConflux(context);
             break;
-        case LEGACY_RLP_DATA:
+        case CONFLUX_RLP_DATA:
             processData(context);
             break;
-        case LEGACY_RLP_R:
-        case LEGACY_RLP_S:
+        case CONFLUX_RLP_R:
+        case CONFLUX_RLP_S:
             processAndDiscard(context);
             break;
-        case LEGACY_RLP_V:
+        case CONFLUX_RLP_V:
             processV(context);
             break;
         default:
@@ -579,7 +453,7 @@ static parserStatus_e processTxInternal(txContext_t *context) {
     for (;;) {
         customStatus_e customStatus = CUSTOM_NOT_HANDLED;
         // EIP 155 style transaction
-        if (PARSING_IS_DONE(context)) {
+        if (context->currentField == CONFLUX_RLP_DONE) {
             PRINTF("parsing is done\n");
             return USTREAM_FINISHED;
         }
@@ -590,7 +464,7 @@ static parserStatus_e processTxInternal(txContext_t *context) {
         // `USTREAM_FINISHED` preemptively. Case number 2 should NOT happen as it is up to
         // `ledgerjs` to correctly decrease the size of the APDU (`commandLength`) so that this
         // situation doesn't happen.
-        if ((context->txType == LEGACY && context->currentField == LEGACY_RLP_V) &&
+        if ((context->currentField == CONFLUX_RLP_V) &&
             (context->commandLength == 0)) {
             context->content->vLength = 0;
             PRINTF("finished\n");
@@ -625,32 +499,11 @@ static parserStatus_e processTxInternal(txContext_t *context) {
         }
         if (customStatus == CUSTOM_NOT_HANDLED) {
             PRINTF("Current field: %d\n", context->currentField);
-            switch (context->txType) {
-                bool fault;
-                case LEGACY:
-                    fault = processLegacyTx(context);
-                    if (fault) {
-                        return USTREAM_FAULT;
-                    } else {
-                        break;
-                    }
-                case EIP2930:
-                    fault = processEIP2930Tx(context);
-                    if (fault) {
-                        return USTREAM_FAULT;
-                    } else {
-                        break;
-                    }
-                case EIP1559:
-                    fault = processEIP1559Tx(context);
-                    if (fault) {
-                        return USTREAM_FAULT;
-                    } else {
-                        break;
-                    }
-                default:
-                    PRINTF("Transaction type %d is not supported\n", context->txType);
-                    return USTREAM_FAULT;
+
+            bool fault = processConfluxTx(context);
+
+            if (fault) {
+                return USTREAM_FAULT;
             }
         }
     }
@@ -659,14 +512,12 @@ static parserStatus_e processTxInternal(txContext_t *context) {
 
 parserStatus_e processTx(txContext_t *context,
                          uint8_t *buffer,
-                         uint32_t length,
-                         uint32_t processingFlags) {
+                         uint32_t length) {
     parserStatus_e result;
     BEGIN_TRY {
         TRY {
             context->workBuffer = buffer;
             context->commandLength = length;
-            context->processingFlags = processingFlags;
             result = processTxInternal(context);
             PRINTF("result: %d\n", result);
         }
