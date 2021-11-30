@@ -18,7 +18,7 @@
 
 // #define MAX_BIP32_PATH 10
 
-// #define WEI_TO_ETHER 18
+#define WEI_TO_ETHER 18
 
 // #define SELECTOR_LENGTH 4
 
@@ -222,6 +222,6 @@ extern uint8_t appState;
 // extern uint32_t eth2WithdrawalIndex;
 // #endif
 
-// void reset_app_context(void);
+void reset_app_context(void);
 
 #endif  // __SHARED_CONTEXT_H__

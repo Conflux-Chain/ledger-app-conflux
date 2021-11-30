@@ -47,7 +47,7 @@ typedef enum rlpConfluxTxField_e {
     CONFLUX_RLP_CONTENT,
     CONFLUX_RLP_NONCE,
     CONFLUX_RLP_GASPRICE,
-    CONFLUX_RLP_STARTGAS,
+    CONFLUX_RLP_GASLIMIT,
     CONFLUX_RLP_TO,
     CONFLUX_RLP_VALUE,
     CONFLUX_RLP_STORAGE_LIMIT,
@@ -74,8 +74,8 @@ typedef struct txInt256_t {
 } txInt256_t;
 
 typedef struct txContent_t {
-    txInt256_t gasprice;  // Used as MaxFeePerGas when dealing with EIP1559 transactions.
-    txInt256_t startgas;  // Also known as `gasLimit`.
+    txInt256_t gasprice;
+    txInt256_t gaslimit;
     txInt256_t value;
     txInt256_t nonce;
     txInt256_t chainID;
@@ -101,7 +101,6 @@ typedef struct txContext_t {
     uint32_t rlpBufferPos;
     uint8_t *workBuffer;
     uint32_t commandLength;
-    ustreamProcess_t customProcessor;
     txContent_t *content;
     void *extra;
 } txContext_t;
@@ -109,7 +108,6 @@ typedef struct txContext_t {
 void initTx(txContext_t *context,
             cx_sha3_t *sha3,
             txContent_t *content,
-            ustreamProcess_t customProcessor,
             void *extra);
 parserStatus_e processTx(txContext_t *context,
                          uint8_t *buffer,

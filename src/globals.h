@@ -57,3 +57,11 @@ typedef struct internalStorage_t {
 
 extern const internalStorage_t N_storage_real;
 #define N_storage (*( volatile internalStorage_t *)PIC(&N_storage_real))
+
+
+
+
+
+//////////////////
+#define CONFLUX_MAINNET_CHAINID 1029
+#define CONFLUX_TESTNET_CHAINID 1

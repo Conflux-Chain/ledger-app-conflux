@@ -36,6 +36,12 @@
 #include "../common/bip32.h"
 #include "../common/format.h"
 
+/////////////////////////
+#include "shared_context.h"
+#include "../types.h"
+#include "utils2.h"
+/////////////////////////
+
 static action_validate_cb g_validate_callback;
 static char g_amount[30];
 static char g_bip32_path[60];
@@ -169,4 +175,323 @@ int ui_display_transaction() {
     ux_flow_init(0, ux_display_transaction_flow, NULL);
 
     return 0;
+}
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+
+void prepareFeeDisplay();
+void prepareNetworkDisplay();
+void ux_approve_tx(bool fromPlugin);
+
+void prepareDisplayTransaction() {
+    char displayBuffer[50];
+
+    // Store the hash
+    cx_hash((cx_hash_t *) &global_sha3,
+            CX_LAST,
+            tmpCtx.transactionContext.hash,
+            0,
+            tmpCtx.transactionContext.hash,
+            32);
+
+    PRINTF("Hash: %.*H\n", INT256_LENGTH, tmpCtx.transactionContext.hash);
+
+    // Prepare destination address to display
+    if (tmpContent.txContent.destinationLength != 0) {
+        getEthDisplayableAddress(tmpContent.txContent.destination, displayBuffer, sizeof(displayBuffer), &global_sha3, 1); // TODO
+        strlcpy(strings.common.fullAddress, displayBuffer, sizeof(strings.common.fullAddress));
+    } else {
+        strcpy(strings.common.fullAddress, "Contract");
+    }
+
+    // Prepare amount to display
+    amountToString(tmpContent.txContent.value.value, tmpContent.txContent.value.length, WEI_TO_ETHER, "CFX", displayBuffer, sizeof(displayBuffer));
+    strlcpy(strings.common.fullAmount, displayBuffer, sizeof(strings.common.fullAmount));
+
+    // Prepare nonce to display
+    uint256_t nonce;
+    convertUint256BE(tmpContent.txContent.nonce.value, tmpContent.txContent.nonce.length, &nonce);
+    tostring256(&nonce, 10, displayBuffer, sizeof(displayBuffer));
+    strlcpy(strings.common.nonce, displayBuffer, sizeof(strings.common.nonce));
+
+    // Compute maximum fee
+    prepareFeeDisplay();
+    PRINTF("Fees displayed: %s\n", strings.common.maxFee);
+
+    // Prepare chainID field
+    prepareNetworkDisplay();
+    PRINTF("Network: %s\n", strings.common.network_name);
+
+    ux_approve_tx(false);
+}
+
+void prepareNetworkDisplay() {
+    uint64_t chain_id = u64_from_BE(tmpContent.txContent.chainID.value, tmpContent.txContent.chainID.length);
+
+    switch (chain_id) {
+        case CONFLUX_MAINNET_CHAINID:
+            strlcpy(strings.common.network_name, "mainnet", sizeof(strings.common.network_name));
+            break;
+
+        case CONFLUX_TESTNET_CHAINID:
+            strlcpy(strings.common.network_name, "testnet", sizeof(strings.common.network_name));
+            break;
+
+        default:
+            u64_to_string(chain_id, strings.common.network_name, sizeof(strings.common.network_name));
+    }
+}
+
+// Convert `BEgasPrice` and `BEgasLimit` to Uint256 and then stores the multiplication of both in
+// `output`.
+static void computeFees(txInt256_t *BEgasPrice, txInt256_t *BEgasLimit, uint256_t *output) {
+    uint256_t gasPrice = {0};
+    uint256_t gasLimit = {0};
+
+    PRINTF("Gas price %.*H\n", BEgasPrice->length, BEgasPrice->value);
+    PRINTF("Gas limit %.*H\n", BEgasLimit->length, BEgasLimit->value);
+    convertUint256BE(BEgasPrice->value, BEgasPrice->length, &gasPrice);
+    convertUint256BE(BEgasLimit->value, BEgasLimit->length, &gasLimit);
+    mul256(&gasPrice, &gasLimit, output);
+}
+
+static void feesToString(uint256_t *rawFee, char *displayBuffer, uint32_t displayBufferSize) {
+    char *feeTicker = "CFX";
+    uint8_t tickerOffset = 0;
+    uint32_t i;
+
+    tostring256(rawFee, 10, (char *) (G_io_apdu_buffer + 100), 100);
+    i = 0;
+    while (G_io_apdu_buffer[100 + i]) {
+        i++;
+    }
+    adjustDecimals((char *) (G_io_apdu_buffer + 100),
+                   i,
+                   (char *) G_io_apdu_buffer,
+                   100,
+                   WEI_TO_ETHER);
+    i = 0;
+    tickerOffset = 0;
+    memset(displayBuffer, 0, displayBufferSize);
+    while (feeTicker[tickerOffset]) {
+        displayBuffer[tickerOffset] = feeTicker[tickerOffset];
+        tickerOffset++;
+    }
+    while (G_io_apdu_buffer[i]) {
+        displayBuffer[tickerOffset + i] = G_io_apdu_buffer[i];
+        i++;
+    }
+    displayBuffer[tickerOffset + i] = '\0';
+}
+
+void prepareAndCopyFees(txInt256_t *BEGasPrice,
+                        txInt256_t *BEGasLimit,
+                        char *displayBuffer,
+                        uint32_t displayBufferSize) {
+    uint256_t rawFee = {0};
+    computeFees(BEGasPrice, BEGasLimit, &rawFee);
+    feesToString(&rawFee, displayBuffer, displayBufferSize);
+}
+
+void prepareFeeDisplay() {
+    prepareAndCopyFees(&tmpContent.txContent.gasprice,
+                       &tmpContent.txContent.gaslimit,
+                       strings.common.maxFee,
+                       sizeof(strings.common.maxFee));
+}
+
+unsigned int io_seproxyhal_touch_tx_ok(__attribute__((unused)) const bagl_element_t *e) {
+    uint8_t privateKeyData[INT256_LENGTH];
+    uint8_t signature[100];
+    cx_ecfp_private_key_t privateKey;
+    uint32_t tx = 0;
+    io_seproxyhal_io_heartbeat();
+    os_perso_derive_node_bip32(CX_CURVE_256K1,
+                               tmpCtx.transactionContext.bip32Path,
+                               tmpCtx.transactionContext.pathLength,
+                               privateKeyData,
+                               NULL);
+    cx_ecfp_init_private_key(CX_CURVE_256K1, privateKeyData, 32, &privateKey);
+
+    ////////////////////////
+    // PRINTF("privateKey: %.*H\n", sizeof(privateKey), privateKey);
+    // PRINTF("privateKeyData: %.*H\n", sizeof(privateKeyData), privateKeyData);
+    ////////////////////////
+
+    explicit_bzero(privateKeyData, sizeof(privateKeyData));
+    unsigned int info = 0;
+    io_seproxyhal_io_heartbeat();
+    cx_ecdsa_sign(&privateKey,
+                  CX_RND_RFC6979 | CX_LAST,
+                  CX_SHA256,
+                  tmpCtx.transactionContext.hash,
+                  sizeof(tmpCtx.transactionContext.hash),
+                  signature,
+                  sizeof(signature),
+                  &info);
+
+    ////////////////////////
+    PRINTF("signature: %.*H\n", sizeof(signature), signature);
+    ////////////////////////
+
+    explicit_bzero(&privateKey, sizeof(privateKey));
+
+    if (tmpContent.txContent.vLength == 0) {
+        // Legacy API
+        G_io_apdu_buffer[0] = 27;
+    } else {
+        // New API
+        // Note that this is wrong for a large v, but ledgerjs will recover.
+
+        // Taking only the 4 highest bytes to not introduce breaking changes. In the future,
+        // this should be updated.
+        uint32_t v = (uint32_t) u64_from_BE(tmpContent.txContent.v, MIN(4, tmpContent.txContent.vLength));
+        G_io_apdu_buffer[0] = (v * 2) + 35;
+    }
+    if (info & CX_ECCINFO_PARITY_ODD) {
+        G_io_apdu_buffer[0]++;
+    }
+    if (info & CX_ECCINFO_xGTn) {
+        G_io_apdu_buffer[0] += 2;
+    }
+
+    helper_send_response_sig_2(signature);
+    tx = 65;
+    G_io_apdu_buffer[tx++] = 0x90;
+    G_io_apdu_buffer[tx++] = 0x00;
+    // Send back the response, do not restart the event loop
+    io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, tx);
+    // if (called_from_swap) {
+    //     os_sched_exit(0);
+    // }
+    reset_app_context();
+    // Display back the original UX
+    ui_menu_main();
+    return 0;  // do not redraw the widget
+}
+
+unsigned int io_seproxyhal_touch_tx_cancel(__attribute__((unused)) const bagl_element_t *e) {
+    reset_app_context();
+    G_io_apdu_buffer[0] = 0x69;
+    G_io_apdu_buffer[1] = 0x85;
+    // Send back the response, do not restart the event loop
+    io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, 2);
+    // Display back the original UX
+    ui_menu_main();
+    return 0;  // do not redraw the widget
+}
+
+UX_STEP_NOCB(ux_approval_review_step,
+    pnn,
+    {
+      &C_icon_eye,
+      "Review",
+      "transaction",
+    });
+
+UX_STEP_NOCB(
+    ux_approval_amount_step,
+    bnnn_paging,
+    {
+      .title = "Amount",
+      .text = strings.common.fullAmount
+    });
+UX_STEP_NOCB(
+    ux_approval_nonce_step,
+    bnnn_paging,
+    {
+      .title = "Nonce",
+      .text = strings.common.nonce
+    });
+UX_STEP_NOCB(
+    ux_approval_address_step,
+    bnnn_paging,
+    {
+      .title = "Address",
+      .text = strings.common.fullAddress,
+    });
+
+UX_STEP_NOCB(
+    ux_approval_fees_step,
+    bnnn_paging,
+    {
+      .title = "Max Fees",
+      .text = strings.common.maxFee,
+    });
+UX_STEP_NOCB(
+    ux_approval_network_step,
+    bnnn_paging,
+    {
+      .title = "Network",
+      .text = strings.common.network_name,
+    });
+
+UX_STEP_CB(
+    ux_approval_accept_step,
+    pbb,
+    io_seproxyhal_touch_tx_ok(NULL),
+    {
+      &C_icon_validate_14,
+      "Accept",
+      "and send",
+    });
+UX_STEP_CB(
+    ux_approval_reject_step,
+    pb,
+    io_seproxyhal_touch_tx_cancel(NULL),
+    {
+      &C_icon_crossmark,
+      "Reject",
+    });
+
+const ux_flow_step_t *ux_approval_tx_flow[15];
+
+void ux_approve_tx(bool fromPlugin) {
+    int step = 0;
+    ux_approval_tx_flow[step++] = &ux_approval_review_step;
+
+    // if (!fromPlugin && tmpContent.txContent.dataPresent && !N_storage.contractDetails) {
+    //     ux_approval_tx_flow[step++] = &ux_approval_blind_signing_warning_step;
+    // }
+
+    // if (fromPlugin) {
+    //     // Add the special dynamic display logic
+    //     ux_approval_tx_flow[step++] = &ux_plugin_approval_id_step;
+    //     ux_approval_tx_flow[step++] = &ux_plugin_approval_before_step;
+    //     ux_approval_tx_flow[step++] = &ux_plugin_approval_display_step;
+    //     ux_approval_tx_flow[step++] = &ux_plugin_approval_after_step;
+    // } else {
+        // We're in a regular transaction, just show the amount and the address
+        ux_approval_tx_flow[step++] = &ux_approval_amount_step;
+        ux_approval_tx_flow[step++] = &ux_approval_address_step;
+        ux_approval_tx_flow[step++] = &ux_approval_nonce_step;
+    // }
+
+    // if (N_storage.displayNonce) {
+    //     ux_approval_tx_flow[step++] = &ux_approval_nonce_step;
+    // }
+
+    // uint64_t chain_id = get_chain_id();
+    // if (chainConfig->chainId == ETHEREUM_MAINNET_CHAINID && chain_id != chainConfig->chainId) {
+        ux_approval_tx_flow[step++] = &ux_approval_network_step;
+    // }
+
+    ux_approval_tx_flow[step++] = &ux_approval_fees_step;
+    ux_approval_tx_flow[step++] = &ux_approval_accept_step;
+    ux_approval_tx_flow[step++] = &ux_approval_reject_step;
+    ux_approval_tx_flow[step++] = FLOW_END_STEP;
+
+    ux_flow_init(0, ux_approval_tx_flow, NULL);
 }

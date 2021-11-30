@@ -28,12 +28,10 @@
 void initTx(txContext_t *context,
             cx_sha3_t *sha3,
             txContent_t *content,
-            ustreamProcess_t customProcessor,
             void *extra) {
     memset(context, 0, sizeof(txContext_t));
     context->sha3 = sha3;
     context->content = content;
-    context->customProcessor = customProcessor;
     context->extra = extra;
     context->currentField = RLP_NONE + 1;
     cx_keccak_init(context->sha3, 256);
@@ -144,30 +142,25 @@ static void processNonce(txContext_t *context) {
     }
 }
 
-static void processStartGas(txContext_t *context) {
+static void processGasLimit(txContext_t *context) {
     if (context->currentFieldIsList) {
-        PRINTF("Invalid type for RLP_STARTGAS\n");
+        PRINTF("Invalid type for RLP_GASLIMIT\n");
         THROW(EXCEPTION);
     }
     if (context->currentFieldLength > MAX_INT256) {
-        PRINTF("Invalid length for RLP_STARTGAS %d\n", context->currentFieldLength);
+        PRINTF("Invalid length for RLP_GASLIMIT %d\n", context->currentFieldLength);
         THROW(EXCEPTION);
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
             MIN(context->commandLength, context->currentFieldLength - context->currentFieldPos);
-        copyTxData(context, context->content->startgas.value + context->currentFieldPos, copySize);
+        copyTxData(context, context->content->gaslimit.value + context->currentFieldPos, copySize);
     }
     if (context->currentFieldPos == context->currentFieldLength) {
-        context->content->startgas.length = context->currentFieldLength;
+        context->content->gaslimit.length = context->currentFieldLength;
         context->currentField++;
         context->processingField = false;
     }
-}
-
-// Alias over `processStartGas()`.
-static void processGasLimit(txContext_t *context) {
-    processStartGas(context);
 }
 
 static void processGasprice(txContext_t *context) {
@@ -302,6 +295,7 @@ static void processData(txContext_t *context) {
         PRINTF("Invalid type for RLP_DATA\n");
         THROW(EXCEPTION);
     }
+    // TODO: set dataPresent
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
             MIN(context->commandLength, context->currentFieldLength - context->currentFieldPos);
@@ -364,8 +358,8 @@ static bool processConfluxTx(txContext_t *context) {
         case CONFLUX_RLP_GASPRICE:
             processGasprice(context);
             break;
-        case CONFLUX_RLP_STARTGAS:
-            processStartGas(context);
+        case CONFLUX_RLP_GASLIMIT:
+            processGasLimit(context);
             break;
         case CONFLUX_RLP_TO:
             processTo(context);
@@ -478,23 +472,6 @@ static parserStatus_e processTxInternal(txContext_t *context) {
             parserStatus_e status = parseRLP(context);
             if (status != USTREAM_CONTINUE) {
                 return status;
-            }
-        }
-        if (context->customProcessor != NULL) {
-            customStatus = context->customProcessor(context);
-            PRINTF("After customprocessor\n");
-            switch (customStatus) {
-                case CUSTOM_NOT_HANDLED:
-                case CUSTOM_HANDLED:
-                    break;
-                case CUSTOM_SUSPENDED:
-                    return USTREAM_SUSPENDED;
-                case CUSTOM_FAULT:
-                    PRINTF("Custom processor aborted\n");
-                    return USTREAM_FAULT;
-                default:
-                    PRINTF("Unhandled custom processor status\n");
-                    return USTREAM_FAULT;
             }
         }
         if (customStatus == CUSTOM_NOT_HANDLED) {
