@@ -56,6 +56,9 @@ typedef enum rlpLegacyTxField_e {
     LEGACY_RLP_STARTGAS,
     LEGACY_RLP_TO,
     LEGACY_RLP_VALUE,
+    LEGACY_RLP_STORAGE_LIMIT,
+    LEGACY_RLP_EPOCH_HEIGHT,
+    LEGACY_RLP_CHAIN_ID,
     LEGACY_RLP_DATA,
     LEGACY_RLP_V,
     LEGACY_RLP_R,
@@ -124,6 +127,8 @@ typedef struct txContent_t {
     txInt256_t value;
     txInt256_t nonce;
     txInt256_t chainID;
+    txInt256_t storageLimit;
+    txInt256_t epochHeight;
     uint8_t destination[ADDRESS_LENGTH];
     uint8_t destinationLength;
     uint8_t v[8];

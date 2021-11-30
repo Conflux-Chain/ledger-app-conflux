@@ -232,6 +232,69 @@ static void processValue(txContext_t *context) {
     }
 }
 
+static void processStorageLimit(txContext_t *context) {
+    if (context->currentFieldIsList) {
+        PRINTF("Invalid type for RLP_VALUE\n");
+        THROW(EXCEPTION);
+    }
+    if (context->currentFieldLength > MAX_INT256) {
+        PRINTF("Invalid length for RLP_VALUE\n");
+        THROW(EXCEPTION);
+    }
+    if (context->currentFieldPos < context->currentFieldLength) {
+        uint32_t copySize =
+            MIN(context->commandLength, context->currentFieldLength - context->currentFieldPos);
+        copyTxData(context, context->content->storageLimit.value + context->currentFieldPos, copySize);
+    }
+    if (context->currentFieldPos == context->currentFieldLength) {
+        context->content->storageLimit.length = context->currentFieldLength;
+        context->currentField++;
+        context->processingField = false;
+    }
+}
+
+static void processEpochHeight(txContext_t *context) {
+    if (context->currentFieldIsList) {
+        PRINTF("Invalid type for RLP_VALUE\n");
+        THROW(EXCEPTION);
+    }
+    if (context->currentFieldLength > MAX_INT256) {
+        PRINTF("Invalid length for RLP_VALUE\n");
+        THROW(EXCEPTION);
+    }
+    if (context->currentFieldPos < context->currentFieldLength) {
+        uint32_t copySize =
+            MIN(context->commandLength, context->currentFieldLength - context->currentFieldPos);
+        copyTxData(context, context->content->epochHeight.value + context->currentFieldPos, copySize);
+    }
+    if (context->currentFieldPos == context->currentFieldLength) {
+        context->content->epochHeight.length = context->currentFieldLength;
+        context->currentField++;
+        context->processingField = false;
+    }
+}
+
+static void processChainIDConflux(txContext_t *context) {
+    if (context->currentFieldIsList) {
+        PRINTF("Invalid type for RLP_VALUE\n");
+        THROW(EXCEPTION);
+    }
+    if (context->currentFieldLength > MAX_INT256) {
+        PRINTF("Invalid length for RLP_VALUE\n");
+        THROW(EXCEPTION);
+    }
+    if (context->currentFieldPos < context->currentFieldLength) {
+        uint32_t copySize =
+            MIN(context->commandLength, context->currentFieldLength - context->currentFieldPos);
+        copyTxData(context, context->content->chainID.value + context->currentFieldPos, copySize);
+    }
+    if (context->currentFieldPos == context->currentFieldLength) {
+        context->content->chainID.length = context->currentFieldLength;
+        context->currentField++;
+        context->processingField = false;
+    }
+}
+
 static void processTo(txContext_t *context) {
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_TO\n");
@@ -436,6 +499,15 @@ static bool processLegacyTx(txContext_t *context) {
         case LEGACY_RLP_VALUE:
             processValue(context);
             break;
+        case LEGACY_RLP_STORAGE_LIMIT:
+            processStorageLimit(context);
+            break;
+        case LEGACY_RLP_EPOCH_HEIGHT:
+            processEpochHeight(context);
+            break;
+        case LEGACY_RLP_CHAIN_ID:
+            processChainIDConflux(context);
+            break;
         case LEGACY_RLP_DATA:
             processData(context);
             break;
@@ -518,13 +590,6 @@ static parserStatus_e processTxInternal(txContext_t *context) {
         // `USTREAM_FINISHED` preemptively. Case number 2 should NOT happen as it is up to
         // `ledgerjs` to correctly decrease the size of the APDU (`commandLength`) so that this
         // situation doesn't happen.
-
-        PRINTF("!! context->txType: %x\n", context->txType);
-        PRINTF("!! LEGACY: %x\n", LEGACY);
-        PRINTF("!! context->currentField: %x\n", context->currentField);
-        PRINTF("!! LEGACY_RLP_V: %x\n", LEGACY_RLP_V);
-        PRINTF("!! context->commandLength: %x\n", context->commandLength);
-
         if ((context->txType == LEGACY && context->currentField == LEGACY_RLP_V) &&
             (context->commandLength == 0)) {
             context->content->vLength = 0;

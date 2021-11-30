@@ -220,19 +220,15 @@ int handler_sign_tx2(uint8_t p1,
                         //  (chainConfig->kind == CHAIN_KIND_WANCHAIN ? TX_FLAG_TYPE : 0));
                         0);
 
-    // tmpContent.txContent.gasprice
-    // tmpContent.txContent.startgas
-    // tmpContent.txContent.value
-    // tmpContent.txContent.nonce
-    // tmpContent.txContent.chainID
-    // tmpContent.txContent.destination
-
+    PRINTF("Nonce %.*H\n", tmpContent.txContent.nonce.length, tmpContent.txContent.nonce.value);
     PRINTF("Gas price %.*H\n", tmpContent.txContent.gasprice.length, tmpContent.txContent.gasprice.value);
     PRINTF("Gas limit %.*H\n", tmpContent.txContent.startgas.length, tmpContent.txContent.startgas.value);
-    PRINTF("Value %.*H\n", tmpContent.txContent.value.length, tmpContent.txContent.value.value);
-    PRINTF("Nonce %.*H\n", tmpContent.txContent.nonce.length, tmpContent.txContent.nonce.value);
-    PRINTF("Chain ID %.*H\n", tmpContent.txContent.chainID.length, tmpContent.txContent.chainID.value);
     PRINTF("Destination: %.*H\n", ADDRESS_LEN, tmpContent.txContent.destination);
+    PRINTF("Value %.*H\n", tmpContent.txContent.value.length, tmpContent.txContent.value.value);
+    PRINTF("Storage limit %.*H\n", tmpContent.txContent.storageLimit.length, tmpContent.txContent.storageLimit.value);
+    PRINTF("Epoch height %.*H\n", tmpContent.txContent.epochHeight.length, tmpContent.txContent.epochHeight.value);
+    PRINTF("Chain ID %.*H\n", tmpContent.txContent.chainID.length, tmpContent.txContent.chainID.value);
+    // TODO: data
 
     switch (txResult) {
         case USTREAM_SUSPENDED:
