@@ -22,6 +22,5 @@
  * @return zero or positive integer if success, negative integer otherwise.
  *
  */
-int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more);
-
-int handler_sign_tx2(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t dataLength);
+// TODO
+int handler_sign_tx(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t dataLength);

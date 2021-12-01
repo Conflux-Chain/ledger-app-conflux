@@ -19,4 +19,3 @@ void ui_action_validate_pubkey(bool choice);
  *
  */
 void ui_action_validate_transaction(bool choice);
-void ui_action_validate_transaction_2(bool choice);

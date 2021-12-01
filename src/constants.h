@@ -34,3 +34,9 @@
  * Exponent used to convert Drip to CFX unit (N CFX = N * 10^18 Drip).
  */
 #define EXPONENT_SMALLEST_UNIT 18
+
+/**
+ * Well-known Conflux chain IDs
+ */
+#define CONFLUX_MAINNET_CHAINID 1029
+#define CONFLUX_TESTNET_CHAINID 1

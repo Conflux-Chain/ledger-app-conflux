@@ -36,24 +36,6 @@ void ui_action_validate_pubkey(bool choice) {
 }
 
 void ui_action_validate_transaction(bool choice) {
-    if (choice) {
-        G_context.state = STATE_APPROVED;
-
-        if (crypto_sign_message() < 0) {
-            G_context.state = STATE_NONE;
-            io_send_sw(SW_SIGNATURE_FAIL);
-        } else {
-            helper_send_response_sig();
-        }
-    } else {
-        G_context.state = STATE_NONE;
-        io_send_sw(SW_DENY);
-    }
-
-    ui_menu_main();
-}
-
-void ui_action_validate_transaction_2(bool choice) {
     // TODO
     io_seproxyhal_io_heartbeat();
 
@@ -64,7 +46,7 @@ void ui_action_validate_transaction_2(bool choice) {
             // G_context.state = STATE_NONE;
             io_send_sw(SW_SIGNATURE_FAIL);
         } else {
-            helper_send_response_sig_2(G_context.tx_info.signature);
+            helper_send_response_sig(G_context.tx_info.signature);
         }
     } else {
         G_context.state = STATE_NONE;

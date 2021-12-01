@@ -35,13 +35,10 @@
 #include "../transaction/types.h"
 #include "../common/bip32.h"
 #include "../common/format.h"
-
-/////////////////////////
 #include "../types.h"
-#include "utils2.h"
+#include "utils2.h" // TODO
 #include "../crypto.h"
 #include "ethUtils.h"
-/////////////////////////
 
 static action_validate_cb g_validate_callback;
 static char g_amount[30];
@@ -180,12 +177,6 @@ int ui_display_transaction() {
 
 
 
-
-
-
-
-
-
 ////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////
@@ -235,7 +226,7 @@ void prepareDisplayTransaction() {
     prepareNetworkDisplay();
     PRINTF("Network: %s\n", strings.common.network_name);
 
-    g_validate_callback = &ui_action_validate_transaction_2;
+    g_validate_callback = &ui_action_validate_transaction;
     ux_approve_tx(false);
 }
 
@@ -387,28 +378,15 @@ void ux_approve_tx() {
     //     ux_approval_tx_flow[step++] = &ux_approval_blind_signing_warning_step;
     // }
 
-    // if (fromPlugin) {
-    //     // Add the special dynamic display logic
-    //     ux_approval_tx_flow[step++] = &ux_plugin_approval_id_step;
-    //     ux_approval_tx_flow[step++] = &ux_plugin_approval_before_step;
-    //     ux_approval_tx_flow[step++] = &ux_plugin_approval_display_step;
-    //     ux_approval_tx_flow[step++] = &ux_plugin_approval_after_step;
-    // } else {
-        // We're in a regular transaction, just show the amount and the address
-        ux_approval_tx_flow[step++] = &ux_approval_amount_step;
-        ux_approval_tx_flow[step++] = &ux_approval_address_step;
-        ux_approval_tx_flow[step++] = &ux_approval_nonce_step;
-    // }
+    ux_approval_tx_flow[step++] = &ux_approval_amount_step;
+    ux_approval_tx_flow[step++] = &ux_approval_address_step;
+    ux_approval_tx_flow[step++] = &ux_approval_nonce_step;
 
     // if (N_storage.displayNonce) {
     //     ux_approval_tx_flow[step++] = &ux_approval_nonce_step;
     // }
 
-    // uint64_t chain_id = get_chain_id();
-    // if (chainConfig->chainId == ETHEREUM_MAINNET_CHAINID && chain_id != chainConfig->chainId) {
-        ux_approval_tx_flow[step++] = &ux_approval_network_step;
-    // }
-
+    ux_approval_tx_flow[step++] = &ux_approval_network_step;
     ux_approval_tx_flow[step++] = &ux_approval_fees_step;
     ux_approval_tx_flow[step++] = &ux_approval_accept_step;
     ux_approval_tx_flow[step++] = &ux_approval_reject_step;

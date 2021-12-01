@@ -1,19 +1,14 @@
 #pragma once
 
+#define NETWORK_STRING_MAX_SIZE 16
+
 #include <stddef.h>  // size_t
 #include <stdint.h>  // uint*_t
 
 #include "constants.h"
 #include "transaction/types.h"
 #include "common/bip32.h"
-
-
-////////////////////
-#define P1_FIRST                            0x00
-#define P1_MORE                             0x80
 #include "ethUstream.h"
-#define NETWORK_STRING_MAX_SIZE 16
-//////////////////////////////////////
 
 /**
  * Enumeration for the status of IO.
@@ -31,8 +26,7 @@ typedef enum {
     GET_VERSION = 0x03,     /// version of the application
     GET_APP_NAME = 0x04,    /// name of the application
     GET_PUBLIC_KEY = 0x05,  /// public key of corresponding BIP32 path
-    SIGN_TX = 0x06,         /// sign transaction with BIP32 path
-    SIGN_TX2 = 0x07         /// sign transaction with BIP32 path
+    SIGN_TX = 0x06          /// sign transaction with BIP32 path
 } command_e;
 
 /**
@@ -102,16 +96,11 @@ typedef struct {
     txContent_t tx_content;
 } global_ctx_t;
 
-
-
-
-
-
-
-//////////////////////
-
-typedef enum { APP_STATE_IDLE, APP_STATE_SIGNING_TX, APP_STATE_SIGNING_MESSAGE } app_state_t;
-
+typedef enum {
+    APP_STATE_IDLE,
+    APP_STATE_SIGNING_TX,
+    APP_STATE_SIGNING_MESSAGE
+} app_state_t;
 
 typedef struct txStringProperties_t {
     char fullAddress[43];
@@ -124,10 +113,3 @@ typedef struct txStringProperties_t {
 typedef union {
     txStringProperties_t common;
 } strings_t;
-
-extern strings_t strings;
-extern cx_sha3_t global_sha3;
-
-extern uint8_t appState;
-
-void reset_app_context(void);

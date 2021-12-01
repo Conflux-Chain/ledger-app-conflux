@@ -37,7 +37,6 @@ int helper_send_response_pubkey(void);
  * @return zero or positive integer if success, -1 otherwise.
  *
  */
-int helper_send_response_sig(void);
 
 // TODO
-void helper_send_response_sig_2(const uint8_t *signature);
+void helper_send_response_sig(const uint8_t *signature);

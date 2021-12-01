@@ -31,30 +31,11 @@
 #include "../common/buffer.h"
 #include "../transaction/types.h"
 #include "../transaction/deserialize.h"
-
-/////////////////////////
 #include "../types.h"
-#include "utils2.h"
-/////////////////////////
+#include "apdu_constants.h"
+#include "utils2.h" // TODO
 
-// void debug_print_tx(transaction_t* tx) {
-//     char nonce[21] = {0};
-//     char address[21] = {0};
-//     char amount[21] = {0};
-//     char tx_memo[466] = {0};
-
-//     format_u64(nonce, sizeof(nonce), tx->nonce);
-//     PRINTF("nonce: %s\n", nonce);
-//     // format_hex(&tx->to, ADDRESS_LEN, address, sizeof(address));
-//     // PRINTF("address: %s\n", address);
-//     PRINTF("to: %.*H\n", ADDRESS_LEN, tx->to);
-//     format_fpu64(amount, sizeof(amount), tx->value, EXPONENT_SMALLEST_UNIT);  // exponent of smallest unit is EXPONENT_SMALLEST_UNIT
-//     PRINTF("amount: %s\n", amount);
-//     transaction_utils_format_memo(tx->memo, tx->memo_len, tx_memo, sizeof(tx_memo));
-//     PRINTF("memo: %s\n", tx_memo);
-// }
-
-void debug_print_tx_2(txContent_t* tx) {
+void debug_print_tx(txContent_t* tx) {
     PRINTF("Nonce %.*H\n", tx->nonce.length, tx->nonce.value);
     PRINTF("Gas price %.*H\n", tx->gasprice.length, tx->gasprice.value);
     PRINTF("Gas limit %.*H\n", tx->gaslimit.length, tx->gaslimit.value);
@@ -66,80 +47,80 @@ void debug_print_tx_2(txContent_t* tx) {
     // TODO: data
 }
 
-int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more) {
-    if (chunk == 0) {  // first APDU, parse BIP32 path
-        explicit_bzero(&G_context, sizeof(G_context));
-        G_context.req_type = CONFIRM_TRANSACTION;
-        G_context.state = STATE_NONE;
+// int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more) {
+//     if (chunk == 0) {  // first APDU, parse BIP32 path
+//         explicit_bzero(&G_context, sizeof(G_context));
+//         G_context.req_type = CONFIRM_TRANSACTION;
+//         G_context.state = STATE_NONE;
 
-        if (!buffer_read_u8(cdata, &G_context.bip32_path_len) ||
-            !buffer_read_bip32_path(cdata,
-                                    G_context.bip32_path,
-                                    (size_t) G_context.bip32_path_len)) {
-            return io_send_sw(SW_WRONG_DATA_LENGTH);
-        }
+//         if (!buffer_read_u8(cdata, &G_context.bip32_path_len) ||
+//             !buffer_read_bip32_path(cdata,
+//                                     G_context.bip32_path,
+//                                     (size_t) G_context.bip32_path_len)) {
+//             return io_send_sw(SW_WRONG_DATA_LENGTH);
+//         }
 
-        return io_send_sw(SW_OK);
-    } else {  // parse transaction
-        if (G_context.req_type != CONFIRM_TRANSACTION) {
-            return io_send_sw(SW_BAD_STATE);
-        }
+//         return io_send_sw(SW_OK);
+//     } else {  // parse transaction
+//         if (G_context.req_type != CONFIRM_TRANSACTION) {
+//             return io_send_sw(SW_BAD_STATE);
+//         }
 
-        if (more) {  // more APDUs with transaction part
-            if (G_context.tx_info.raw_tx_len + cdata->size > MAX_TRANSACTION_LEN &&  //
-                !buffer_move(cdata,
-                             G_context.tx_info.raw_tx + G_context.tx_info.raw_tx_len,
-                             cdata->size)) {
-                return io_send_sw(SW_WRONG_TX_LENGTH);
-            }
+//         if (more) {  // more APDUs with transaction part
+//             if (G_context.tx_info.raw_tx_len + cdata->size > MAX_TRANSACTION_LEN &&  //
+//                 !buffer_move(cdata,
+//                              G_context.tx_info.raw_tx + G_context.tx_info.raw_tx_len,
+//                              cdata->size)) {
+//                 return io_send_sw(SW_WRONG_TX_LENGTH);
+//             }
 
-            G_context.tx_info.raw_tx_len += cdata->size;
+//             G_context.tx_info.raw_tx_len += cdata->size;
 
-            return io_send_sw(SW_OK);
-        } else {  // last APDU, let's parse and sign
-            if (G_context.tx_info.raw_tx_len + cdata->size > MAX_TRANSACTION_LEN ||  //
-                !buffer_move(cdata,
-                             G_context.tx_info.raw_tx + G_context.tx_info.raw_tx_len,
-                             cdata->size)) {
-                return io_send_sw(SW_WRONG_TX_LENGTH);
-            }
+//             return io_send_sw(SW_OK);
+//         } else {  // last APDU, let's parse and sign
+//             if (G_context.tx_info.raw_tx_len + cdata->size > MAX_TRANSACTION_LEN ||  //
+//                 !buffer_move(cdata,
+//                              G_context.tx_info.raw_tx + G_context.tx_info.raw_tx_len,
+//                              cdata->size)) {
+//                 return io_send_sw(SW_WRONG_TX_LENGTH);
+//             }
 
-            G_context.tx_info.raw_tx_len += cdata->size;
+//             G_context.tx_info.raw_tx_len += cdata->size;
 
-            buffer_t buf = {.ptr = G_context.tx_info.raw_tx,
-                            .size = G_context.tx_info.raw_tx_len,
-                            .offset = 0};
+//             buffer_t buf = {.ptr = G_context.tx_info.raw_tx,
+//                             .size = G_context.tx_info.raw_tx_len,
+//                             .offset = 0};
 
-            parser_status_e status = transaction_deserialize(&buf, &G_context.tx_info.transaction);
-            PRINTF("Parsing status: %d.\n", status);
-            if (status != PARSING_OK) {
-                return io_send_sw(SW_TX_PARSING_FAIL);
-            }
+//             parser_status_e status = transaction_deserialize(&buf, &G_context.tx_info.transaction);
+//             PRINTF("Parsing status: %d.\n", status);
+//             if (status != PARSING_OK) {
+//                 return io_send_sw(SW_TX_PARSING_FAIL);
+//             }
 
-            PRINTF("raw: %.*H\n", G_context.tx_info.raw_tx_len, G_context.tx_info.raw_tx);
-            // debug_print_tx(&G_context.tx_info.transaction);
+//             PRINTF("raw: %.*H\n", G_context.tx_info.raw_tx_len, G_context.tx_info.raw_tx);
+//             // debug_print_tx(&G_context.tx_info.transaction);
 
-            G_context.state = STATE_PARSED;
+//             G_context.state = STATE_PARSED;
 
-            cx_sha3_t keccak256;
-            cx_keccak_init(&keccak256, 256);
-            cx_hash((cx_hash_t *) &keccak256,
-                    CX_LAST,
-                    G_context.tx_info.raw_tx,
-                    G_context.tx_info.raw_tx_len,
-                    G_context.tx_info.m_hash,
-                    sizeof(G_context.tx_info.m_hash));
+//             cx_sha3_t keccak256;
+//             cx_keccak_init(&keccak256, 256);
+//             cx_hash((cx_hash_t *) &keccak256,
+//                     CX_LAST,
+//                     G_context.tx_info.raw_tx,
+//                     G_context.tx_info.raw_tx_len,
+//                     G_context.tx_info.m_hash,
+//                     sizeof(G_context.tx_info.m_hash));
 
-            PRINTF("Hash: %.*H\n", sizeof(G_context.tx_info.m_hash), G_context.tx_info.m_hash);
+//             PRINTF("Hash: %.*H\n", sizeof(G_context.tx_info.m_hash), G_context.tx_info.m_hash);
 
-            return ui_display_transaction();
-        }
-    }
+//             return ui_display_transaction();
+//         }
+//     }
 
-    return 0;
-}
+//     return 0;
+// }
 
-int handler_sign_tx2(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t dataLength) {
+int handler_sign_tx(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t dataLength) {
     if (p1 == P1_FIRST) {
         if (dataLength < 1) {
             PRINTF("Invalid data\n");
@@ -198,7 +179,7 @@ int handler_sign_tx2(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t dataL
 
     // parse RLP-encoded transaction
     parserStatus_e txResult = processTx(&G_context.tx_context, workBuffer, dataLength);
-    debug_print_tx_2(&G_context.tx_content);
+    debug_print_tx(&G_context.tx_content);
 
     switch (txResult) {
         case USTREAM_SUSPENDED:
