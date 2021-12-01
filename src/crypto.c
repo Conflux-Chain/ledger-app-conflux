@@ -80,6 +80,9 @@ int crypto_sign_message() {
 
     BEGIN_TRY {
         TRY {
+            // TODO
+            io_seproxyhal_io_heartbeat();
+
             sig_len = cx_ecdsa_sign(&private_key,
                                     CX_RND_RFC6979 | CX_LAST,
                                     CX_SHA256,

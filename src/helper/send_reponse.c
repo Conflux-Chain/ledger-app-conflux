@@ -53,6 +53,26 @@ int helper_send_response_sig() {
 }
 
 void helper_send_response_sig_2(const uint8_t *signature) {
+    // if (G_context.tx_content.vLength == 0) {
+        // Legacy API
+        G_io_apdu_buffer[0] = G_context.tx_info.v;
+
+    // } else {
+    //     // New API
+    //     // Note that this is wrong for a large v, but ledgerjs will recover.
+
+    //     // Taking only the 4 highest bytes to not introduce breaking changes. In the future,
+    //     // this should be updated.
+    //     uint32_t v = (uint32_t) u64_from_BE(G_context.tx_content.v, MIN(4, G_context.tx_content.vLength));
+    //     G_io_apdu_buffer[0] = (v * 2) + 35;
+    // }
+    // if (info & CX_ECCINFO_PARITY_ODD) {
+    //     G_io_apdu_buffer[0]++;
+    // }
+    // if (info & CX_ECCINFO_xGTn) {
+    //     G_io_apdu_buffer[0] += 2;
+    // }
+
     memset(G_io_apdu_buffer + 1, 0x00, 64);
     uint8_t offset = 1;
     uint8_t xoffset = 4;  // point to r value
@@ -72,4 +92,15 @@ void helper_send_response_sig_2(const uint8_t *signature) {
         xoffset++;
     }
     memmove(G_io_apdu_buffer + offset + 32 - xlength, signature + xoffset, xlength);
+
+    // tx = 65;
+    // G_io_apdu_buffer[tx++] = 0x90;
+    // G_io_apdu_buffer[tx++] = 0x00;
+    // tx = 65;
+    G_io_apdu_buffer[65] = 0x90;
+    G_io_apdu_buffer[66] = 0x00;
+
+    // Send back the response, do not restart the event loop
+    // io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, tx);
+    io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, 67);
 }

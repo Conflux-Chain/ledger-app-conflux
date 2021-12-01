@@ -40,6 +40,7 @@
 #include "shared_context.h"
 #include "../types.h"
 #include "utils2.h"
+#include "../crypto.h"
 /////////////////////////
 
 static action_validate_cb g_validate_callback;
@@ -234,6 +235,7 @@ void prepareDisplayTransaction() {
     prepareNetworkDisplay();
     PRINTF("Network: %s\n", strings.common.network_name);
 
+    g_validate_callback = &ui_action_validate_transaction_2;
     ux_approve_tx(false);
 }
 
@@ -312,87 +314,6 @@ void prepareFeeDisplay() {
                        sizeof(strings.common.maxFee));
 }
 
-unsigned int io_seproxyhal_touch_tx_ok(__attribute__((unused)) const bagl_element_t *e) {
-    uint8_t privateKeyData[INT256_LENGTH];
-    uint8_t signature[100];
-    cx_ecfp_private_key_t privateKey;
-    uint32_t tx = 0;
-    io_seproxyhal_io_heartbeat();
-    os_perso_derive_node_bip32(CX_CURVE_256K1,
-                               G_context.bip32_path,
-                               G_context.bip32_path_len,
-                               privateKeyData,
-                               NULL);
-    cx_ecfp_init_private_key(CX_CURVE_256K1, privateKeyData, 32, &privateKey);
-
-    ////////////////////////
-    // PRINTF("privateKey: %.*H\n", sizeof(privateKey), privateKey);
-    // PRINTF("privateKeyData: %.*H\n", sizeof(privateKeyData), privateKeyData);
-    ////////////////////////
-
-    explicit_bzero(privateKeyData, sizeof(privateKeyData));
-    unsigned int info = 0;
-    io_seproxyhal_io_heartbeat();
-    cx_ecdsa_sign(&privateKey,
-                  CX_RND_RFC6979 | CX_LAST,
-                  CX_SHA256,
-                  G_context.tx_info.m_hash,
-                  sizeof(G_context.tx_info.m_hash),
-                  signature,
-                  sizeof(signature),
-                  &info);
-
-    ////////////////////////
-    PRINTF("signature: %.*H\n", sizeof(signature), signature);
-    ////////////////////////
-
-    explicit_bzero(&privateKey, sizeof(privateKey));
-
-    if (G_context.tx_content.vLength == 0) {
-        // Legacy API
-        G_io_apdu_buffer[0] = 27;
-    } else {
-        // New API
-        // Note that this is wrong for a large v, but ledgerjs will recover.
-
-        // Taking only the 4 highest bytes to not introduce breaking changes. In the future,
-        // this should be updated.
-        uint32_t v = (uint32_t) u64_from_BE(G_context.tx_content.v, MIN(4, G_context.tx_content.vLength));
-        G_io_apdu_buffer[0] = (v * 2) + 35;
-    }
-    if (info & CX_ECCINFO_PARITY_ODD) {
-        G_io_apdu_buffer[0]++;
-    }
-    if (info & CX_ECCINFO_xGTn) {
-        G_io_apdu_buffer[0] += 2;
-    }
-
-    helper_send_response_sig_2(signature);
-    tx = 65;
-    G_io_apdu_buffer[tx++] = 0x90;
-    G_io_apdu_buffer[tx++] = 0x00;
-    // Send back the response, do not restart the event loop
-    io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, tx);
-    // if (called_from_swap) {
-    //     os_sched_exit(0);
-    // }
-    reset_app_context();
-    // Display back the original UX
-    ui_menu_main();
-    return 0;  // do not redraw the widget
-}
-
-unsigned int io_seproxyhal_touch_tx_cancel(__attribute__((unused)) const bagl_element_t *e) {
-    reset_app_context();
-    G_io_apdu_buffer[0] = 0x69;
-    G_io_apdu_buffer[1] = 0x85;
-    // Send back the response, do not restart the event loop
-    io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, 2);
-    // Display back the original UX
-    ui_menu_main();
-    return 0;  // do not redraw the widget
-}
-
 UX_STEP_NOCB(ux_approval_review_step,
     pnn,
     {
@@ -441,7 +362,7 @@ UX_STEP_NOCB(
 UX_STEP_CB(
     ux_approval_accept_step,
     pbb,
-    io_seproxyhal_touch_tx_ok(NULL),
+    (*g_validate_callback)(true),
     {
       &C_icon_validate_14,
       "Accept",
@@ -450,7 +371,7 @@ UX_STEP_CB(
 UX_STEP_CB(
     ux_approval_reject_step,
     pb,
-    io_seproxyhal_touch_tx_cancel(NULL),
+    (*g_validate_callback)(false),
     {
       &C_icon_crossmark,
       "Reject",
