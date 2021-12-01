@@ -33,27 +33,26 @@
 #include "../transaction/deserialize.h"
 
 /////////////////////////
-#include "shared_context.h"
 #include "../types.h"
 #include "utils2.h"
 /////////////////////////
 
-void debug_print_tx(transaction_t* tx) {
-    char nonce[21] = {0};
-    char address[21] = {0};
-    char amount[21] = {0};
-    char tx_memo[466] = {0};
+// void debug_print_tx(transaction_t* tx) {
+//     char nonce[21] = {0};
+//     char address[21] = {0};
+//     char amount[21] = {0};
+//     char tx_memo[466] = {0};
 
-    format_u64(nonce, sizeof(nonce), tx->nonce);
-    PRINTF("nonce: %s\n", nonce);
-    // format_hex(&tx->to, ADDRESS_LEN, address, sizeof(address));
-    // PRINTF("address: %s\n", address);
-    PRINTF("to: %.*H\n", ADDRESS_LEN, tx->to);
-    format_fpu64(amount, sizeof(amount), tx->value, WEI_TO_ETHER);  // exponent of smallest unit is WEI_TO_ETHER
-    PRINTF("amount: %s\n", amount);
-    transaction_utils_format_memo(tx->memo, tx->memo_len, tx_memo, sizeof(tx_memo));
-    PRINTF("memo: %s\n", tx_memo);
-}
+//     format_u64(nonce, sizeof(nonce), tx->nonce);
+//     PRINTF("nonce: %s\n", nonce);
+//     // format_hex(&tx->to, ADDRESS_LEN, address, sizeof(address));
+//     // PRINTF("address: %s\n", address);
+//     PRINTF("to: %.*H\n", ADDRESS_LEN, tx->to);
+//     format_fpu64(amount, sizeof(amount), tx->value, EXPONENT_SMALLEST_UNIT);  // exponent of smallest unit is EXPONENT_SMALLEST_UNIT
+//     PRINTF("amount: %s\n", amount);
+//     transaction_utils_format_memo(tx->memo, tx->memo_len, tx_memo, sizeof(tx_memo));
+//     PRINTF("memo: %s\n", tx_memo);
+// }
 
 void debug_print_tx_2(txContent_t* tx) {
     PRINTF("Nonce %.*H\n", tx->nonce.length, tx->nonce.value);
@@ -61,9 +60,9 @@ void debug_print_tx_2(txContent_t* tx) {
     PRINTF("Gas limit %.*H\n", tx->gaslimit.length, tx->gaslimit.value);
     PRINTF("Destination: %.*H\n", ADDRESS_LEN, tx->destination);
     PRINTF("Value %.*H\n", tx->value.length, tx->value.value);
-    PRINTF("Storage limit %.*H\n", tx->storageLimit.length, tx->storageLimit.value);
-    PRINTF("Epoch height %.*H\n", tx->epochHeight.length, tx->epochHeight.value);
-    PRINTF("Chain ID %.*H\n", tx->chainID.length, tx->chainID.value);
+    PRINTF("Storage limit %.*H\n", tx->storagelimit.length, tx->storagelimit.value);
+    PRINTF("Epoch height %.*H\n", tx->epochheight.length, tx->epochheight.value);
+    PRINTF("Chain ID %.*H\n", tx->chainid.length, tx->chainid.value);
     // TODO: data
 }
 
@@ -107,17 +106,6 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more) {
 
             G_context.tx_info.raw_tx_len += cdata->size;
 
-            ///////////////////////////////////////////////
-
-            initTx(&G_context.tx_context, &global_sha3, &G_context.tx_content, NULL);
-
-            parserStatus_e txResult = processTx(&G_context.tx_context,
-                         &G_context.tx_context.workBuffer,
-                        //  dataLength,
-                        0);
-
-            ///////////////////////////////////////////////
-
             buffer_t buf = {.ptr = G_context.tx_info.raw_tx,
                             .size = G_context.tx_info.raw_tx_len,
                             .offset = 0};
@@ -129,7 +117,7 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more) {
             }
 
             PRINTF("raw: %.*H\n", G_context.tx_info.raw_tx_len, G_context.tx_info.raw_tx);
-            debug_print_tx(&G_context.tx_info.transaction);
+            // debug_print_tx(&G_context.tx_info.transaction);
 
             G_context.state = STATE_PARSED;
 

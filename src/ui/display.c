@@ -37,10 +37,10 @@
 #include "../common/format.h"
 
 /////////////////////////
-#include "shared_context.h"
 #include "../types.h"
 #include "utils2.h"
 #include "../crypto.h"
+#include "ethUtils.h"
 /////////////////////////
 
 static action_validate_cb g_validate_callback;
@@ -194,7 +194,7 @@ int ui_display_transaction() {
 
 void prepareFeeDisplay();
 void prepareNetworkDisplay();
-void ux_approve_tx(bool fromPlugin);
+void ux_approve_tx();
 
 void prepareDisplayTransaction() {
     char displayBuffer[50];
@@ -218,7 +218,7 @@ void prepareDisplayTransaction() {
     }
 
     // Prepare amount to display
-    amountToString(G_context.tx_content.value.value, G_context.tx_content.value.length, WEI_TO_ETHER, "CFX", displayBuffer, sizeof(displayBuffer));
+    amountToString(G_context.tx_content.value.value, G_context.tx_content.value.length, EXPONENT_SMALLEST_UNIT, "CFX", displayBuffer, sizeof(displayBuffer));
     strlcpy(strings.common.fullAmount, displayBuffer, sizeof(strings.common.fullAmount));
 
     // Prepare nonce to display
@@ -240,7 +240,7 @@ void prepareDisplayTransaction() {
 }
 
 void prepareNetworkDisplay() {
-    uint64_t chain_id = u64_from_BE(G_context.tx_content.chainID.value, G_context.tx_content.chainID.length);
+    uint64_t chain_id = u64_from_BE(G_context.tx_content.chainid.value, G_context.tx_content.chainid.length);
 
     switch (chain_id) {
         case CONFLUX_MAINNET_CHAINID:
@@ -283,7 +283,7 @@ static void feesToString(uint256_t *rawFee, char *displayBuffer, uint32_t displa
                    i,
                    (char *) G_io_apdu_buffer,
                    100,
-                   WEI_TO_ETHER);
+                   EXPONENT_SMALLEST_UNIT);
     i = 0;
     tickerOffset = 0;
     memset(displayBuffer, 0, displayBufferSize);
@@ -379,7 +379,7 @@ UX_STEP_CB(
 
 const ux_flow_step_t *ux_approval_tx_flow[15];
 
-void ux_approve_tx(bool fromPlugin) {
+void ux_approve_tx() {
     int step = 0;
     ux_approval_tx_flow[step++] = &ux_approval_review_step;
 

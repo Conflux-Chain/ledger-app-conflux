@@ -78,9 +78,9 @@ typedef struct txContent_t {
     txInt256_t gaslimit;
     txInt256_t value;
     txInt256_t nonce;
-    txInt256_t chainID;
-    txInt256_t storageLimit;
-    txInt256_t epochHeight;
+    txInt256_t chainid;
+    txInt256_t storagelimit;
+    txInt256_t epochheight;
     uint8_t destination[ADDRESS_LENGTH];
     uint8_t destinationLength;
     uint8_t v[8];

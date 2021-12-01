@@ -31,6 +31,9 @@ int crypto_derive_private_key(cx_ecfp_private_key_t *private_key,
 
     BEGIN_TRY {
         TRY {
+            // TODO
+            io_seproxyhal_io_heartbeat();
+
             // derive the seed with bip32_path
             os_perso_derive_node_bip32(CX_CURVE_256K1,
                                        bip32_path,

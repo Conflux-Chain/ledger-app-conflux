@@ -84,43 +84,6 @@ static void processContent(txContext_t *context) {
     context->processingField = false;
 }
 
-static void processAccessList(txContext_t *context) {
-    if (!context->currentFieldIsList) {
-        PRINTF("Invalid type for RLP_ACCESS_LIST\n");
-        THROW(EXCEPTION);
-    }
-    if (context->currentFieldPos < context->currentFieldLength) {
-        uint32_t copySize =
-            MIN(context->commandLength, context->currentFieldLength - context->currentFieldPos);
-        copyTxData(context, NULL, copySize);
-    }
-    if (context->currentFieldPos == context->currentFieldLength) {
-        context->currentField++;
-        context->processingField = false;
-    }
-}
-
-static void processChainID(txContext_t *context) {
-    if (context->currentFieldIsList) {
-        PRINTF("Invalid type for RLP_CHAINID\n");
-        THROW(EXCEPTION);
-    }
-    if (context->currentFieldLength > MAX_INT256) {
-        PRINTF("Invalid length for RLP_CHAINID\n");
-        THROW(EXCEPTION);
-    }
-    if (context->currentFieldPos < context->currentFieldLength) {
-        uint32_t copySize =
-            MIN(context->commandLength, context->currentFieldLength - context->currentFieldPos);
-        copyTxData(context, context->content->chainID.value, copySize);
-    }
-    if (context->currentFieldPos == context->currentFieldLength) {
-        context->content->chainID.length = context->currentFieldLength;
-        context->currentField++;
-        context->processingField = false;
-    }
-}
-
 static void processNonce(txContext_t *context) {
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_NONCE\n");
@@ -163,7 +126,7 @@ static void processGasLimit(txContext_t *context) {
     }
 }
 
-static void processGasprice(txContext_t *context) {
+static void processGasPrice(txContext_t *context) {
     if (context->currentFieldIsList) {
         PRINTF("Invalid type for RLP_GASPRICE\n");
         THROW(EXCEPTION);
@@ -207,20 +170,20 @@ static void processValue(txContext_t *context) {
 
 static void processStorageLimit(txContext_t *context) {
     if (context->currentFieldIsList) {
-        PRINTF("Invalid type for RLP_VALUE\n");
+        PRINTF("Invalid type for RLP_STORAGE_LIMIT\n");
         THROW(EXCEPTION);
     }
     if (context->currentFieldLength > MAX_INT256) {
-        PRINTF("Invalid length for RLP_VALUE\n");
+        PRINTF("Invalid length for RLP_STORAGE_LIMIT\n");
         THROW(EXCEPTION);
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
             MIN(context->commandLength, context->currentFieldLength - context->currentFieldPos);
-        copyTxData(context, context->content->storageLimit.value + context->currentFieldPos, copySize);
+        copyTxData(context, context->content->storagelimit.value + context->currentFieldPos, copySize);
     }
     if (context->currentFieldPos == context->currentFieldLength) {
-        context->content->storageLimit.length = context->currentFieldLength;
+        context->content->storagelimit.length = context->currentFieldLength;
         context->currentField++;
         context->processingField = false;
     }
@@ -228,41 +191,41 @@ static void processStorageLimit(txContext_t *context) {
 
 static void processEpochHeight(txContext_t *context) {
     if (context->currentFieldIsList) {
-        PRINTF("Invalid type for RLP_VALUE\n");
+        PRINTF("Invalid type for RLP_EPOCH_HEIGHT\n");
         THROW(EXCEPTION);
     }
     if (context->currentFieldLength > MAX_INT256) {
-        PRINTF("Invalid length for RLP_VALUE\n");
+        PRINTF("Invalid length for RLP_EPOCH_HEIGHT\n");
         THROW(EXCEPTION);
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
             MIN(context->commandLength, context->currentFieldLength - context->currentFieldPos);
-        copyTxData(context, context->content->epochHeight.value + context->currentFieldPos, copySize);
+        copyTxData(context, context->content->epochheight.value + context->currentFieldPos, copySize);
     }
     if (context->currentFieldPos == context->currentFieldLength) {
-        context->content->epochHeight.length = context->currentFieldLength;
+        context->content->epochheight.length = context->currentFieldLength;
         context->currentField++;
         context->processingField = false;
     }
 }
 
-static void processChainIDConflux(txContext_t *context) {
+static void processChainID(txContext_t *context) {
     if (context->currentFieldIsList) {
-        PRINTF("Invalid type for RLP_VALUE\n");
+        PRINTF("Invalid type for RLP_CHAIN_ID\n");
         THROW(EXCEPTION);
     }
     if (context->currentFieldLength > MAX_INT256) {
-        PRINTF("Invalid length for RLP_VALUE\n");
+        PRINTF("Invalid length for RLP_CHAIN_ID\n");
         THROW(EXCEPTION);
     }
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t copySize =
             MIN(context->commandLength, context->currentFieldLength - context->currentFieldPos);
-        copyTxData(context, context->content->chainID.value + context->currentFieldPos, copySize);
+        copyTxData(context, context->content->chainid.value + context->currentFieldPos, copySize);
     }
     if (context->currentFieldPos == context->currentFieldLength) {
-        context->content->chainID.length = context->currentFieldLength;
+        context->content->chainid.length = context->currentFieldLength;
         context->currentField++;
         context->processingField = false;
     }
@@ -356,7 +319,7 @@ static bool processConfluxTx(txContext_t *context) {
             processNonce(context);
             break;
         case CONFLUX_RLP_GASPRICE:
-            processGasprice(context);
+            processGasPrice(context);
             break;
         case CONFLUX_RLP_GASLIMIT:
             processGasLimit(context);
@@ -374,7 +337,7 @@ static bool processConfluxTx(txContext_t *context) {
             processEpochHeight(context);
             break;
         case CONFLUX_RLP_CHAIN_ID:
-            processChainIDConflux(context);
+            processChainID(context);
             break;
         case CONFLUX_RLP_DATA:
             processData(context);

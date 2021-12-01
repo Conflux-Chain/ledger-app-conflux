@@ -54,6 +54,9 @@ void ui_action_validate_transaction(bool choice) {
 }
 
 void ui_action_validate_transaction_2(bool choice) {
+    // TODO
+    io_seproxyhal_io_heartbeat();
+
     if (choice) {
         G_context.state = STATE_APPROVED;
 

@@ -29,10 +29,6 @@
 #include "apdu/parser.h"
 #include "apdu/dispatcher.h"
 
-///////////////////////
-#include "shared_context.h";
-///////////////////////
-
 uint8_t G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
 io_state_e G_io_state;
 ux_state_t G_ux;

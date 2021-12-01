@@ -21,7 +21,6 @@
 #include <stdint.h>
 
 #include "cx.h"
-#include "chainConfig.h"
 /**
  * @brief Decode an RLP encoded field - see
  * https://github.com/ethereum/wiki/wiki/RLP

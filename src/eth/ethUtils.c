@@ -30,7 +30,6 @@
 #include "os.h"
 #include "cx.h"
 #include "ethUtils.h"
-#include "chainConfig.h"
 #include "ethUstream.h"
 
 bool rlpCanDecode(uint8_t *buffer, uint32_t bufferLength, bool *valid) {

@@ -12,6 +12,7 @@
 #define P1_FIRST                            0x00
 #define P1_MORE                             0x80
 #include "ethUstream.h"
+#define NETWORK_STRING_MAX_SIZE 16
 //////////////////////////////////////
 
 /**
@@ -100,3 +101,33 @@ typedef struct {
     txContext_t tx_context;
     txContent_t tx_content;
 } global_ctx_t;
+
+
+
+
+
+
+
+//////////////////////
+
+typedef enum { APP_STATE_IDLE, APP_STATE_SIGNING_TX, APP_STATE_SIGNING_MESSAGE } app_state_t;
+
+
+typedef struct txStringProperties_t {
+    char fullAddress[43];
+    char fullAmount[79];  // 2^256 is 78 digits long
+    char maxFee[50];
+    char nonce[8];  // 10M tx per account ought to be enough for everybody
+    char network_name[NETWORK_STRING_MAX_SIZE];
+} txStringProperties_t;
+
+typedef union {
+    txStringProperties_t common;
+} strings_t;
+
+extern strings_t strings;
+extern cx_sha3_t global_sha3;
+
+extern uint8_t appState;
+
+void reset_app_context(void);
