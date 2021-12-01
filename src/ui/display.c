@@ -201,28 +201,28 @@ void prepareDisplayTransaction() {
     // Store the hash
     cx_hash((cx_hash_t *) &global_sha3,
             CX_LAST,
-            tmpCtx.transactionContext.hash,
+            G_context.tx_info.m_hash,
             0,
-            tmpCtx.transactionContext.hash,
+            G_context.tx_info.m_hash,
             32);
 
-    PRINTF("Hash: %.*H\n", INT256_LENGTH, tmpCtx.transactionContext.hash);
+    PRINTF("Hash: %.*H\n", INT256_LENGTH, G_context.tx_info.m_hash);
 
     // Prepare destination address to display
-    if (tmpContent.txContent.destinationLength != 0) {
-        getEthDisplayableAddress(tmpContent.txContent.destination, displayBuffer, sizeof(displayBuffer), &global_sha3, 1); // TODO
+    if (G_context.tx_content.destinationLength != 0) {
+        getEthDisplayableAddress(G_context.tx_content.destination, displayBuffer, sizeof(displayBuffer), &global_sha3, 1); // TODO
         strlcpy(strings.common.fullAddress, displayBuffer, sizeof(strings.common.fullAddress));
     } else {
         strcpy(strings.common.fullAddress, "Contract");
     }
 
     // Prepare amount to display
-    amountToString(tmpContent.txContent.value.value, tmpContent.txContent.value.length, WEI_TO_ETHER, "CFX", displayBuffer, sizeof(displayBuffer));
+    amountToString(G_context.tx_content.value.value, G_context.tx_content.value.length, WEI_TO_ETHER, "CFX", displayBuffer, sizeof(displayBuffer));
     strlcpy(strings.common.fullAmount, displayBuffer, sizeof(strings.common.fullAmount));
 
     // Prepare nonce to display
     uint256_t nonce;
-    convertUint256BE(tmpContent.txContent.nonce.value, tmpContent.txContent.nonce.length, &nonce);
+    convertUint256BE(G_context.tx_content.nonce.value, G_context.tx_content.nonce.length, &nonce);
     tostring256(&nonce, 10, displayBuffer, sizeof(displayBuffer));
     strlcpy(strings.common.nonce, displayBuffer, sizeof(strings.common.nonce));
 
@@ -238,7 +238,7 @@ void prepareDisplayTransaction() {
 }
 
 void prepareNetworkDisplay() {
-    uint64_t chain_id = u64_from_BE(tmpContent.txContent.chainID.value, tmpContent.txContent.chainID.length);
+    uint64_t chain_id = u64_from_BE(G_context.tx_content.chainID.value, G_context.tx_content.chainID.length);
 
     switch (chain_id) {
         case CONFLUX_MAINNET_CHAINID:
@@ -306,8 +306,8 @@ void prepareAndCopyFees(txInt256_t *BEGasPrice,
 }
 
 void prepareFeeDisplay() {
-    prepareAndCopyFees(&tmpContent.txContent.gasprice,
-                       &tmpContent.txContent.gaslimit,
+    prepareAndCopyFees(&G_context.tx_content.gasprice,
+                       &G_context.tx_content.gaslimit,
                        strings.common.maxFee,
                        sizeof(strings.common.maxFee));
 }
@@ -319,8 +319,8 @@ unsigned int io_seproxyhal_touch_tx_ok(__attribute__((unused)) const bagl_elemen
     uint32_t tx = 0;
     io_seproxyhal_io_heartbeat();
     os_perso_derive_node_bip32(CX_CURVE_256K1,
-                               tmpCtx.transactionContext.bip32Path,
-                               tmpCtx.transactionContext.pathLength,
+                               G_context.bip32_path,
+                               G_context.bip32_path_len,
                                privateKeyData,
                                NULL);
     cx_ecfp_init_private_key(CX_CURVE_256K1, privateKeyData, 32, &privateKey);
@@ -336,8 +336,8 @@ unsigned int io_seproxyhal_touch_tx_ok(__attribute__((unused)) const bagl_elemen
     cx_ecdsa_sign(&privateKey,
                   CX_RND_RFC6979 | CX_LAST,
                   CX_SHA256,
-                  tmpCtx.transactionContext.hash,
-                  sizeof(tmpCtx.transactionContext.hash),
+                  G_context.tx_info.m_hash,
+                  sizeof(G_context.tx_info.m_hash),
                   signature,
                   sizeof(signature),
                   &info);
@@ -348,7 +348,7 @@ unsigned int io_seproxyhal_touch_tx_ok(__attribute__((unused)) const bagl_elemen
 
     explicit_bzero(&privateKey, sizeof(privateKey));
 
-    if (tmpContent.txContent.vLength == 0) {
+    if (G_context.tx_content.vLength == 0) {
         // Legacy API
         G_io_apdu_buffer[0] = 27;
     } else {
@@ -357,7 +357,7 @@ unsigned int io_seproxyhal_touch_tx_ok(__attribute__((unused)) const bagl_elemen
 
         // Taking only the 4 highest bytes to not introduce breaking changes. In the future,
         // this should be updated.
-        uint32_t v = (uint32_t) u64_from_BE(tmpContent.txContent.v, MIN(4, tmpContent.txContent.vLength));
+        uint32_t v = (uint32_t) u64_from_BE(G_context.tx_content.v, MIN(4, G_context.tx_content.vLength));
         G_io_apdu_buffer[0] = (v * 2) + 35;
     }
     if (info & CX_ECCINFO_PARITY_ODD) {
@@ -462,7 +462,7 @@ void ux_approve_tx(bool fromPlugin) {
     int step = 0;
     ux_approval_tx_flow[step++] = &ux_approval_review_step;
 
-    // if (!fromPlugin && tmpContent.txContent.dataPresent && !N_storage.contractDetails) {
+    // if (!fromPlugin && G_context.tx_content.dataPresent && !N_storage.contractDetails) {
     //     ux_approval_tx_flow[step++] = &ux_approval_blind_signing_warning_step;
     // }
 

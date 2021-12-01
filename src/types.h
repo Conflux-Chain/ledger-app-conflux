@@ -11,6 +11,7 @@
 ////////////////////
 #define P1_FIRST                            0x00
 #define P1_MORE                             0x80
+#include "ethUstream.h"
 //////////////////////////////////////
 
 /**
@@ -95,4 +96,7 @@ typedef struct {
     request_type_e req_type;              /// user request
     uint32_t bip32_path[MAX_BIP32_PATH];  /// BIP32 path
     uint8_t bip32_path_len;               /// lenght of BIP32 path
+
+    txContext_t tx_context;
+    txContent_t tx_content;
 } global_ctx_t;

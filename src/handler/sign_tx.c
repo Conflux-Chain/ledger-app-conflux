@@ -109,10 +109,10 @@ int handler_sign_tx(buffer_t *cdata, uint8_t chunk, bool more) {
 
             ///////////////////////////////////////////////
 
-            initTx(&txContext, &global_sha3, &tmpContent.txContent, NULL);
+            initTx(&G_context.tx_context, &global_sha3, &G_context.tx_content, NULL);
 
-            parserStatus_e txResult = processTx(&txContext,
-                         &txContext.workBuffer,
+            parserStatus_e txResult = processTx(&G_context.tx_context,
+                         &G_context.tx_context.workBuffer,
                         //  dataLength,
                         0);
 
@@ -165,10 +165,10 @@ int handler_sign_tx2(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t dataL
         appState = APP_STATE_SIGNING_TX;
 
         // parse BIP32 path
-        tmpCtx.transactionContext.pathLength = workBuffer[0];
+        G_context.bip32_path_len = workBuffer[0];
 
-        if ((tmpCtx.transactionContext.pathLength < 0x01) ||
-            (tmpCtx.transactionContext.pathLength > MAX_BIP32_PATH)) {
+        if ((G_context.bip32_path_len < 0x01) ||
+            (G_context.bip32_path_len > MAX_BIP32_PATH)) {
             PRINTF("Invalid path\n");
             THROW(0x6a80);
         }
@@ -176,18 +176,18 @@ int handler_sign_tx2(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t dataL
         workBuffer++;
         dataLength--;
 
-        for (uint32_t ii = 0; ii < tmpCtx.transactionContext.pathLength; ii++) {
+        for (uint32_t ii = 0; ii < G_context.bip32_path_len; ii++) {
             if (dataLength < 4) {
                 PRINTF("Invalid data\n");
                 THROW(0x6a80);
             }
 
-            tmpCtx.transactionContext.bip32Path[ii] = U4BE(workBuffer, 0);
+            G_context.bip32_path[ii] = U4BE(workBuffer, 0);
             workBuffer += 4;
             dataLength -= 4;
         }
 
-        initTx(&txContext, &global_sha3, &tmpContent.txContent, NULL);
+        initTx(&G_context.tx_context, &global_sha3, &G_context.tx_content, NULL);
     }
 
     else if (p1 != P1_MORE) {
@@ -203,14 +203,14 @@ int handler_sign_tx2(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t dataL
         THROW(0x6985);
     }
 
-    if (txContext.currentField == RLP_NONE) {
+    if (G_context.tx_context.currentField == RLP_NONE) {
         PRINTF("Parser not initialized\n");
         THROW(0x6985);
     }
 
     // parse RLP-encoded transaction
-    parserStatus_e txResult = processTx(&txContext, workBuffer, dataLength);
-    debug_print_tx_2(&tmpContent.txContent);
+    parserStatus_e txResult = processTx(&G_context.tx_context, workBuffer, dataLength);
+    debug_print_tx_2(&G_context.tx_content);
 
     switch (txResult) {
         case USTREAM_SUSPENDED:

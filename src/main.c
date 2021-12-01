@@ -41,9 +41,6 @@ global_ctx_t G_context;
 const internalStorage_t N_storage_real;
 
 ///////////////////////
-tmpCtx_t tmpCtx;
-txContext_t txContext;
-tmpContent_t tmpContent;
 cx_sha3_t global_sha3;
 uint8_t appState;
 strings_t strings;
@@ -75,9 +72,8 @@ void reset_app_context() {
 // #ifdef HAVE_ETH2
 //     eth2WithdrawalIndex = 0;
 // #endif
-    memset((uint8_t *) &tmpCtx, 0, sizeof(tmpCtx));
-    memset((uint8_t *) &txContext, 0, sizeof(txContext));
-    memset((uint8_t *) &tmpContent, 0, sizeof(tmpContent));
+    memset((uint8_t *) &G_context, 0, sizeof(G_context));
+    // TODO: G_context
 }
 
 // // TODO: use ui_menu_main instead
