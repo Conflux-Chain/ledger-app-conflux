@@ -209,7 +209,7 @@ void prepareDisplayTransaction() {
     }
 
     // Prepare amount to display
-    amountToString(G_context.tx_content.value.value, G_context.tx_content.value.length, EXPONENT_SMALLEST_UNIT, "CFX", displayBuffer, sizeof(displayBuffer));
+    amountToString(G_context.tx_content.value.value, G_context.tx_content.value.length, EXPONENT_SMALLEST_UNIT, "CFX ", displayBuffer, sizeof(displayBuffer));
     strlcpy(strings.common.fullAmount, displayBuffer, sizeof(strings.common.fullAmount));
 
     // Prepare nonce to display
@@ -249,19 +249,32 @@ void prepareNetworkDisplay() {
 
 // Convert `BEgasPrice` and `BEgasLimit` to Uint256 and then stores the multiplication of both in
 // `output`.
-static void computeFees(txInt256_t *BEgasPrice, txInt256_t *BEgasLimit, uint256_t *output) {
+static void computeFees(txInt256_t *BEgasPrice, txInt256_t *BEgasLimit, txInt256_t *BEstorageLimit, uint256_t *output) {
     uint256_t gasPrice = {0};
     uint256_t gasLimit = {0};
+    uint256_t storageLimit = {0};
+    uint256_t temp1 = {0};
+    uint256_t temp2 = {0};
 
     PRINTF("Gas price %.*H\n", BEgasPrice->length, BEgasPrice->value);
     PRINTF("Gas limit %.*H\n", BEgasLimit->length, BEgasLimit->value);
+    PRINTF("Storage limit %.*H\n", BEstorageLimit->length, BEstorageLimit->value);
+
     convertUint256BE(BEgasPrice->value, BEgasPrice->length, &gasPrice);
     convertUint256BE(BEgasLimit->value, BEgasLimit->length, &gasLimit);
-    mul256(&gasPrice, &gasLimit, output);
+    convertUint256BE(BEstorageLimit->value, BEstorageLimit->length, &storageLimit);
+
+    // 10^18/1024 = 976562500000000 = 0x3782dace9d900
+    // initialize multiplier using four uint64_t fields
+    uint256_t multiplier = {{{ 0x00, 0x00 }, { 0x00, 0x3782dace9d900 }}};
+
+    mul256(&gasPrice, &gasLimit, &temp1);
+    mul256(&storageLimit, &multiplier, &temp2);
+    add256(&temp1, &temp2, output);
 }
 
 static void feesToString(uint256_t *rawFee, char *displayBuffer, uint32_t displayBufferSize) {
-    char *feeTicker = "CFX";
+    char *feeTicker = "CFX ";
     uint8_t tickerOffset = 0;
     uint32_t i;
 
@@ -291,16 +304,18 @@ static void feesToString(uint256_t *rawFee, char *displayBuffer, uint32_t displa
 
 void prepareAndCopyFees(txInt256_t *BEGasPrice,
                         txInt256_t *BEGasLimit,
+                        txInt256_t *BEstorageLimit,
                         char *displayBuffer,
                         uint32_t displayBufferSize) {
     uint256_t rawFee = {0};
-    computeFees(BEGasPrice, BEGasLimit, &rawFee);
+    computeFees(BEGasPrice, BEGasLimit, BEstorageLimit, &rawFee);
     feesToString(&rawFee, displayBuffer, displayBufferSize);
 }
 
 void prepareFeeDisplay() {
     prepareAndCopyFees(&G_context.tx_content.gasprice,
                        &G_context.tx_content.gaslimit,
+                       &G_context.tx_content.storagelimit,
                        strings.common.maxFee,
                        sizeof(strings.common.maxFee));
 }
