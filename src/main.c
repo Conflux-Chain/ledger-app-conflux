@@ -35,6 +35,9 @@ ux_state_t G_ux;
 bolos_ux_params_t G_ux_params;
 global_ctx_t G_context;
 const internalStorage_t N_storage_real;
+cx_sha3_t global_sha3;
+uint8_t appState;
+strings_t strings;
 
 void init_storage() {
     if (N_storage.initialized != 0x01) {
@@ -50,6 +53,10 @@ void init_storage() {
     }
 }
 
+void reset_app_context() {
+    appState = APP_STATE_IDLE;
+    memset((uint8_t *) &G_context, 0, sizeof(G_context));
+}
 
 /**
  * Handle APDU command received and send back APDU response using handlers.
@@ -103,6 +110,7 @@ void app_main() {
                 THROW(EXCEPTION_IO_RESET);
             }
             CATCH_OTHER(e) {
+                // TODO: call `reset_app_context` for 0x6~ errors?
                 io_send_sw(e);
             }
             FINALLY {

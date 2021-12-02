@@ -35,6 +35,10 @@
 #include "../transaction/types.h"
 #include "../common/bip32.h"
 #include "../common/format.h"
+#include "../types.h"
+#include "eth/utils.h"
+#include "../crypto.h"
+#include "ethUtils.h"
 
 static action_validate_cb g_validate_callback;
 static char g_amount[30];
@@ -169,4 +173,239 @@ int ui_display_transaction() {
     ux_flow_init(0, ux_display_transaction_flow, NULL);
 
     return 0;
+}
+
+
+
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+
+void prepareFeeDisplay();
+void prepareNetworkDisplay();
+void ux_approve_tx();
+
+void prepareDisplayTransaction() {
+    char displayBuffer[50];
+
+    // Store the hash
+    cx_hash((cx_hash_t *) &global_sha3,
+            CX_LAST,
+            G_context.tx_info.m_hash,
+            0,
+            G_context.tx_info.m_hash,
+            32);
+
+    PRINTF("Hash: %.*H\n", INT256_LENGTH, G_context.tx_info.m_hash);
+
+    // Prepare destination address to display
+    if (G_context.tx_content.destinationLength != 0) {
+        getEthDisplayableAddress(G_context.tx_content.destination, displayBuffer, sizeof(displayBuffer), &global_sha3, 1); // TODO
+        strlcpy(strings.common.fullAddress, displayBuffer, sizeof(strings.common.fullAddress));
+    } else {
+        strcpy(strings.common.fullAddress, "Contract");
+    }
+
+    // Prepare amount to display
+    amountToString(G_context.tx_content.value.value, G_context.tx_content.value.length, EXPONENT_SMALLEST_UNIT, "CFX ", displayBuffer, sizeof(displayBuffer));
+    strlcpy(strings.common.fullAmount, displayBuffer, sizeof(strings.common.fullAmount));
+
+    // Prepare nonce to display
+    uint256_t nonce;
+    convertUint256BE(G_context.tx_content.nonce.value, G_context.tx_content.nonce.length, &nonce);
+    tostring256(&nonce, 10, displayBuffer, sizeof(displayBuffer));
+    strlcpy(strings.common.nonce, displayBuffer, sizeof(strings.common.nonce));
+
+    // Compute maximum fee
+    prepareFeeDisplay();
+    PRINTF("Fees displayed: %s\n", strings.common.maxFee);
+
+    // Prepare chainID field
+    prepareNetworkDisplay();
+    PRINTF("Network: %s\n", strings.common.network_name);
+
+    g_validate_callback = &ui_action_validate_transaction;
+    ux_approve_tx(false);
+}
+
+void prepareNetworkDisplay() {
+    uint64_t chain_id = u64_from_BE(G_context.tx_content.chainid.value, G_context.tx_content.chainid.length);
+
+    switch (chain_id) {
+        case CONFLUX_MAINNET_CHAINID:
+            strlcpy(strings.common.network_name, "mainnet", sizeof(strings.common.network_name));
+            break;
+
+        case CONFLUX_TESTNET_CHAINID:
+            strlcpy(strings.common.network_name, "testnet", sizeof(strings.common.network_name));
+            break;
+
+        default:
+            u64_to_string(chain_id, strings.common.network_name, sizeof(strings.common.network_name));
+    }
+}
+
+// Convert `BEgasPrice` and `BEgasLimit` to Uint256 and then stores the multiplication of both in
+// `output`.
+static void computeFees(txInt256_t *BEgasPrice, txInt256_t *BEgasLimit, txInt256_t *BEstorageLimit, uint256_t *output) {
+    uint256_t gasPrice = {0};
+    uint256_t gasLimit = {0};
+    uint256_t storageLimit = {0};
+    uint256_t temp1 = {0};
+    uint256_t temp2 = {0};
+
+    PRINTF("Gas price %.*H\n", BEgasPrice->length, BEgasPrice->value);
+    PRINTF("Gas limit %.*H\n", BEgasLimit->length, BEgasLimit->value);
+    PRINTF("Storage limit %.*H\n", BEstorageLimit->length, BEstorageLimit->value);
+
+    convertUint256BE(BEgasPrice->value, BEgasPrice->length, &gasPrice);
+    convertUint256BE(BEgasLimit->value, BEgasLimit->length, &gasLimit);
+    convertUint256BE(BEstorageLimit->value, BEstorageLimit->length, &storageLimit);
+
+    // 10^18/1024 = 976562500000000 = 0x3782dace9d900
+    // initialize multiplier using four uint64_t fields
+    uint256_t multiplier = {{{ 0x00, 0x00 }, { 0x00, 0x3782dace9d900 }}};
+
+    mul256(&gasPrice, &gasLimit, &temp1);
+    mul256(&storageLimit, &multiplier, &temp2);
+    add256(&temp1, &temp2, output);
+}
+
+static void feesToString(uint256_t *rawFee, char *displayBuffer, uint32_t displayBufferSize) {
+    char *feeTicker = "CFX ";
+    uint8_t tickerOffset = 0;
+    uint32_t i;
+
+    tostring256(rawFee, 10, (char *) (G_io_apdu_buffer + 100), 100);
+    i = 0;
+    while (G_io_apdu_buffer[100 + i]) {
+        i++;
+    }
+    adjustDecimals((char *) (G_io_apdu_buffer + 100),
+                   i,
+                   (char *) G_io_apdu_buffer,
+                   100,
+                   EXPONENT_SMALLEST_UNIT);
+    i = 0;
+    tickerOffset = 0;
+    memset(displayBuffer, 0, displayBufferSize);
+    while (feeTicker[tickerOffset]) {
+        displayBuffer[tickerOffset] = feeTicker[tickerOffset];
+        tickerOffset++;
+    }
+    while (G_io_apdu_buffer[i]) {
+        displayBuffer[tickerOffset + i] = G_io_apdu_buffer[i];
+        i++;
+    }
+    displayBuffer[tickerOffset + i] = '\0';
+}
+
+void prepareAndCopyFees(txInt256_t *BEGasPrice,
+                        txInt256_t *BEGasLimit,
+                        txInt256_t *BEstorageLimit,
+                        char *displayBuffer,
+                        uint32_t displayBufferSize) {
+    uint256_t rawFee = {0};
+    computeFees(BEGasPrice, BEGasLimit, BEstorageLimit, &rawFee);
+    feesToString(&rawFee, displayBuffer, displayBufferSize);
+}
+
+void prepareFeeDisplay() {
+    prepareAndCopyFees(&G_context.tx_content.gasprice,
+                       &G_context.tx_content.gaslimit,
+                       &G_context.tx_content.storagelimit,
+                       strings.common.maxFee,
+                       sizeof(strings.common.maxFee));
+}
+
+UX_STEP_NOCB(ux_approval_review_step,
+    pnn,
+    {
+      &C_icon_eye,
+      "Review",
+      "transaction",
+    });
+
+UX_STEP_NOCB(
+    ux_approval_amount_step,
+    bnnn_paging,
+    {
+      .title = "Amount",
+      .text = strings.common.fullAmount
+    });
+UX_STEP_NOCB(
+    ux_approval_nonce_step,
+    bnnn_paging,
+    {
+      .title = "Nonce",
+      .text = strings.common.nonce
+    });
+UX_STEP_NOCB(
+    ux_approval_address_step,
+    bnnn_paging,
+    {
+      .title = "Address",
+      .text = strings.common.fullAddress,
+    });
+
+UX_STEP_NOCB(
+    ux_approval_fees_step,
+    bnnn_paging,
+    {
+      .title = "Max Fees",
+      .text = strings.common.maxFee,
+    });
+UX_STEP_NOCB(
+    ux_approval_network_step,
+    bnnn_paging,
+    {
+      .title = "Network",
+      .text = strings.common.network_name,
+    });
+
+UX_STEP_CB(
+    ux_approval_accept_step,
+    pbb,
+    (*g_validate_callback)(true),
+    {
+      &C_icon_validate_14,
+      "Accept",
+      "and send",
+    });
+UX_STEP_CB(
+    ux_approval_reject_step,
+    pb,
+    (*g_validate_callback)(false),
+    {
+      &C_icon_crossmark,
+      "Reject",
+    });
+
+const ux_flow_step_t *ux_approval_tx_flow[15];
+
+void ux_approve_tx() {
+    int step = 0;
+    ux_approval_tx_flow[step++] = &ux_approval_review_step;
+
+    // if (!fromPlugin && G_context.tx_content.dataPresent && !N_storage.contractDetails) {
+    //     ux_approval_tx_flow[step++] = &ux_approval_blind_signing_warning_step;
+    // }
+
+    ux_approval_tx_flow[step++] = &ux_approval_amount_step;
+    ux_approval_tx_flow[step++] = &ux_approval_address_step;
+    ux_approval_tx_flow[step++] = &ux_approval_nonce_step;
+
+    // if (N_storage.displayNonce) {
+    //     ux_approval_tx_flow[step++] = &ux_approval_nonce_step;
+    // }
+
+    ux_approval_tx_flow[step++] = &ux_approval_network_step;
+    ux_approval_tx_flow[step++] = &ux_approval_fees_step;
+    ux_approval_tx_flow[step++] = &ux_approval_accept_step;
+    ux_approval_tx_flow[step++] = &ux_approval_reject_step;
+    ux_approval_tx_flow[step++] = FLOW_END_STEP;
+
+    ux_flow_init(0, ux_approval_tx_flow, NULL);
 }

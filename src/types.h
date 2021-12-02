@@ -1,11 +1,14 @@
 #pragma once
 
+#define NETWORK_STRING_MAX_SIZE 16
+
 #include <stddef.h>  // size_t
 #include <stdint.h>  // uint*_t
 
 #include "constants.h"
 #include "transaction/types.h"
 #include "common/bip32.h"
+#include "ethUstream.h"
 
 /**
  * Enumeration for the status of IO.
@@ -88,4 +91,25 @@ typedef struct {
     request_type_e req_type;              /// user request
     uint32_t bip32_path[MAX_BIP32_PATH];  /// BIP32 path
     uint8_t bip32_path_len;               /// lenght of BIP32 path
+
+    txContext_t tx_context;
+    txContent_t tx_content;
 } global_ctx_t;
+
+typedef enum {
+    APP_STATE_IDLE,
+    APP_STATE_SIGNING_TX,
+    APP_STATE_SIGNING_MESSAGE
+} app_state_t;
+
+typedef struct txStringProperties_t {
+    char fullAddress[43];
+    char fullAmount[79];  // 2^256 is 78 digits long
+    char maxFee[50];
+    char nonce[8];  // 10M tx per account ought to be enough for everybody
+    char network_name[NETWORK_STRING_MAX_SIZE];
+} txStringProperties_t;
+
+typedef union {
+    txStringProperties_t common;
+} strings_t;

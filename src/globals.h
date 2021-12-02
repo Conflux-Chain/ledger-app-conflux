@@ -8,6 +8,8 @@
 #include "types.h"
 #include "constants.h"
 
+void reset_app_context(void);
+
 /**
  * Global buffer for interactions between SE and MCU.
  */
@@ -57,3 +59,7 @@ typedef struct internalStorage_t {
 
 extern const internalStorage_t N_storage_real;
 #define N_storage (*( volatile internalStorage_t *)PIC(&N_storage_real))
+
+extern strings_t strings;
+extern cx_sha3_t global_sha3;
+extern uint8_t appState;

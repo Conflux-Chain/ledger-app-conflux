@@ -22,3 +22,10 @@ int ui_display_address(void);
  *
  */
 int ui_display_transaction(void);
+
+
+
+
+
+// TODO
+void prepareDisplayTransaction(void);
