@@ -21,8 +21,9 @@
 #include "ethUstream.h"
 #include "ethUtils.h"
 #include "uint256.h"
-#include "tokens.h"
-#include "./utils2.h"
+#include "./utils.h"
+
+#define MAX_TICKER_LEN 12  // 10 characters + ' ' + '\0'
 
 static const unsigned char hex_digits[] =
     {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};

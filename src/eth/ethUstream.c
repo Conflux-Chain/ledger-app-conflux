@@ -20,7 +20,7 @@
 
 #include "ethUstream.h"
 #include "ethUtils.h"
-#include "./utils2.h"
+#include "./utils.h"
 
 #define MAX_INT256  32
 #define MAX_ADDRESS 20

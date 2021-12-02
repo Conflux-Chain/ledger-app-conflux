@@ -33,7 +33,7 @@
 #include "../transaction/deserialize.h"
 #include "../types.h"
 #include "apdu_constants.h"
-#include "utils2.h" // TODO
+#include "eth/utils.h"
 
 void debug_print_tx(txContent_t* tx) {
     PRINTF("Nonce %.*H\n", tx->nonce.length, tx->nonce.value);

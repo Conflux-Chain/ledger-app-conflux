@@ -36,7 +36,7 @@
 #include "../common/bip32.h"
 #include "../common/format.h"
 #include "../types.h"
-#include "utils2.h" // TODO
+#include "eth/utils.h"
 #include "../crypto.h"
 #include "ethUtils.h"
 
