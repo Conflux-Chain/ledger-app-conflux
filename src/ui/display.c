@@ -204,6 +204,12 @@ void prepareDisplayTransaction() {
     // Prepare destination address to display
     if (G_context.tx_content.destinationLength != 0) {
         uint64_t chain_id = u64_from_BE(G_context.tx_content.chainid.value, G_context.tx_content.chainid.length);
+
+        if (chain_id > 0xffff) {
+            // TODO: consider a better error code
+            THROW(0x6a80);
+        }
+
         cfxaddr_encode(G_context.tx_content.destination, strings.common.fullAddress, sizeof(strings.common.fullAddress), chain_id);
     } else {
         strcpy(strings.common.fullAddress, "Contract");
