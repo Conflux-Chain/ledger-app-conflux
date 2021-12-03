@@ -72,8 +72,8 @@ int cfxaddr_encode(uint8_t *in, char *out, size_t out_len, uint16_t network_id) 
         }
 
         default: {
-            uint8_t length = 0;
-            uint16_t netid = network_id;
+            uint8_t length = 1;
+            uint16_t netid = network_id / 10;
             while (netid > 0) { length += 1; netid /= 10; }
 
             if (out_len < length + 4 + 34 + 8 + 1) { return CFXADDR_ERROR_WRONG_LENGTH; };
