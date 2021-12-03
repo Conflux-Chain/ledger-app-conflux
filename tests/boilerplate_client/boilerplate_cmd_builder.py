@@ -191,28 +191,16 @@ class BoilerplateCommandBuilder:
 
         cdata: bytes = b"".join([
             len(bip32_paths).to_bytes(1, byteorder="big"),
-            *bip32_paths
+            *bip32_paths,
+            transaction.serialize()
         ])
 
-        yield False, self.serialize(cla=self.CLA,
-                                    ins=InsType.INS_SIGN_TX,
-                                    p1=0x00,
-                                    p2=0x80,
-                                    cdata=cdata)
+        is_first = True
 
-        tx: bytes = transaction.serialize()
-
-        for i, (is_last, chunk) in enumerate(chunkify(tx, MAX_APDU_LEN)):
-            if is_last:
-                yield True, self.serialize(cla=self.CLA,
-                                           ins=InsType.INS_SIGN_TX,
-                                           p1=i + 1,
-                                           p2=0x00,
-                                           cdata=chunk)
-                return
-            else:
-                yield False, self.serialize(cla=self.CLA,
-                                            ins=InsType.INS_SIGN_TX,
-                                            p1=i + 1,
-                                            p2=0x80,
-                                            cdata=chunk)
+        for i, (is_last, chunk) in enumerate(chunkify(cdata, MAX_APDU_LEN)):
+            yield is_last, self.serialize(cla=self.CLA,
+                                        ins=InsType.INS_SIGN_TX,
+                                        p1 = 0x00 if is_first else 0x80,
+                                        p2=0x00,
+                                        cdata=chunk)
+            is_first = False
