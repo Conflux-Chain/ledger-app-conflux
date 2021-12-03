@@ -39,6 +39,7 @@
 #include "eth/utils.h"
 #include "../crypto.h"
 #include "ethUtils.h"
+#include "cfxaddr.h"
 
 static action_validate_cb g_validate_callback;
 static char g_amount[30];
@@ -188,7 +189,7 @@ void prepareNetworkDisplay();
 void ux_approve_tx();
 
 void prepareDisplayTransaction() {
-    char displayBuffer[50];
+    char displayBuffer[52];
 
     // Store the hash
     cx_hash((cx_hash_t *) &global_sha3,
@@ -202,8 +203,14 @@ void prepareDisplayTransaction() {
 
     // Prepare destination address to display
     if (G_context.tx_content.destinationLength != 0) {
-        getEthDisplayableAddress(G_context.tx_content.destination, displayBuffer, sizeof(displayBuffer), &global_sha3, 1); // TODO
-        strlcpy(strings.common.fullAddress, displayBuffer, sizeof(strings.common.fullAddress));
+        uint64_t chain_id = u64_from_BE(G_context.tx_content.chainid.value, G_context.tx_content.chainid.length);
+
+        if (chain_id > 0xffff) {
+            // TODO: consider a better error code
+            THROW(0x6a80);
+        }
+
+        cfxaddr_encode(G_context.tx_content.destination, strings.common.fullAddress, sizeof(strings.common.fullAddress), chain_id);
     } else {
         strcpy(strings.common.fullAddress, "Contract");
     }

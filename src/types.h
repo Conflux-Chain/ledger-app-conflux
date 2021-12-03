@@ -103,7 +103,7 @@ typedef enum {
 } app_state_t;
 
 typedef struct txStringProperties_t {
-    char fullAddress[43];
+    char fullAddress[52];
     char fullAmount[79];  // 2^256 is 78 digits long
     char maxFee[50];
     char nonce[8];  // 10M tx per account ought to be enough for everybody
