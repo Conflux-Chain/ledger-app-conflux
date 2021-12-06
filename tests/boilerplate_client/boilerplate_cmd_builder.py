@@ -162,13 +162,14 @@ class BoilerplateCommandBuilder:
 
         cdata: bytes = b"".join([
             len(bip32_paths).to_bytes(1, byteorder="big"),
-            *bip32_paths
+            *bip32_paths,
+            (1029).to_bytes(2, byteorder="big"),
         ])
 
         return self.serialize(cla=self.CLA,
                               ins=InsType.INS_GET_PUBLIC_KEY,
                               p1=0x01 if display else 0x00,
-                              p2=0x00,
+                              p2=0x01, # return chaincode
                               cdata=cdata)
 
     def sign_tx(self, bip32_path: str, transaction: Transaction) -> Iterator[Tuple[bool, bytes]]:

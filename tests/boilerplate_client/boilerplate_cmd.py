@@ -93,6 +93,8 @@ class BoilerplateCommand:
         offset += 1
         pub_key: bytes = response[offset:offset + pub_key_len]
         offset += pub_key_len
+
+        # TODO: ignore when not returned
         chain_code_len: int = response[offset]
         offset += 1
         chain_code: bytes = response[offset:offset + chain_code_len]

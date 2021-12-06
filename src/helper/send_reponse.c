@@ -33,9 +33,12 @@ int helper_send_response_pubkey() {
     resp[offset++] = 0x04;
     memmove(resp + offset, G_context.pk_info.raw_public_key, PUBKEY_LEN);
     offset += PUBKEY_LEN;
-    resp[offset++] = CHAINCODE_LEN;
-    memmove(resp + offset, G_context.pk_info.chain_code, CHAINCODE_LEN);
-    offset += CHAINCODE_LEN;
+
+    if (G_context.pk_info.get_chaincode) {
+        resp[offset++] = CHAINCODE_LEN;
+        memmove(resp + offset, G_context.pk_info.chain_code, CHAINCODE_LEN);
+        offset += CHAINCODE_LEN;
+    }
 
     return io_send_response(&(const buffer_t){.ptr = resp, .size = offset, .offset = 0}, SW_OK);
 }

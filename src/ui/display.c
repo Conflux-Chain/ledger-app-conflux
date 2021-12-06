@@ -60,7 +60,7 @@ UX_STEP_NOCB(ux_display_address_step,
              bnnn_paging,
              {
                  .title = "Address",
-                 .text = g_address,
+                 .text = strings.common.fullAddress,
              });
 // Step with approve button
 UX_STEP_CB(ux_display_approve_step,
@@ -111,7 +111,8 @@ int ui_display_address() {
     if (!address_from_pubkey(G_context.pk_info.raw_public_key, address, sizeof(address))) {
         return io_send_sw(SW_DISPLAY_ADDRESS_FAIL);
     }
-    snprintf(g_address, sizeof(g_address), "0x%.*H", sizeof(address), address);
+
+    cfxaddr_encode(address, strings.common.fullAddress, sizeof(strings.common.fullAddress), G_context.pk_info.chain_id);
 
     g_validate_callback = &ui_action_validate_pubkey;
 
