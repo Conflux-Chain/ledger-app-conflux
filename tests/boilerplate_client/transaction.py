@@ -1,8 +1,13 @@
 from io import BytesIO
 from typing import Union
+from rlp import encode
 
 from boilerplate_client.utils import (read, read_uint, read_varint,
                                       write_varint, UINT64_MAX)
+
+# https://stackoverflow.com/a/30375198
+def int_to_bytes(x: int) -> bytes:
+    return x.to_bytes((x.bit_length() + 7) // 8, 'big')
 
 
 class TransactionError(Exception):
@@ -10,11 +15,27 @@ class TransactionError(Exception):
 
 
 class Transaction:
-    def __init__(self, nonce: int, to: Union[str, bytes], value: int, memo: str) -> None:
+    def __init__(
+        self,
+        nonce: int,
+        gasPrice: int,
+        gasLimit: int,
+        to: str,
+        value: int,
+        data: str,
+        storageLimit: int,
+        epochHeight: int,
+        chainId: int
+    ) -> None:
         self.nonce: int = nonce
-        self.to: bytes = bytes.fromhex(to[2:]) if isinstance(to, str) else to
+        self.gasPrice: int = gasPrice
+        self.gasLimit: int = gasLimit
+        self.to: str = to
         self.value: int = value
-        self.memo: bytes = memo.encode("ascii")
+        self.data: str = data
+        self.storageLimit: int = storageLimit
+        self.epochHeight: int = epochHeight
+        self.chainId: int = chainId
 
         if not (0 <= self.nonce <= UINT64_MAX):
             raise TransactionError(f"Bad nonce: '{self.nonce}'!")
@@ -22,26 +43,18 @@ class Transaction:
         if not (0 <= self.value <= UINT64_MAX):
             raise TransactionError(f"Bad value: '{self.value}'!")
 
-        if len(self.to) != 20:
+        if len(self.to) != 40:
             raise TransactionError(f"Bad address: '{self.to}'!")
 
     def serialize(self) -> bytes:
-        return b"".join([
-            self.nonce.to_bytes(8, byteorder="big"),
-            self.to,
-            self.value.to_bytes(8, byteorder="big"),
-            write_varint(len(self.memo)),
-            self.memo
+        return encode([
+            int_to_bytes(self.nonce),
+            int_to_bytes(self.gasPrice),
+            int_to_bytes(self.gasLimit),
+            bytes.fromhex(self.to),
+            int_to_bytes(self.value),
+            int_to_bytes(self.storageLimit),
+            int_to_bytes(self.epochHeight),
+            int_to_bytes(self.chainId),
+            bytes.fromhex(self.data)
         ])
-
-    @classmethod
-    def from_bytes(cls, hexa: Union[bytes, BytesIO]):
-        buf: BytesIO = BytesIO(hexa) if isinstance(hexa, bytes) else hexa
-
-        nonce: int = read_uint(buf, 64, byteorder="big")
-        to: bytes = read(buf, 20)
-        value: int = read_uint(buf, 64, byteorder="big")
-        memo_len: int = read_varint(buf)
-        memo: str = read(buf, memo_len).decode("ascii")
-
-        return cls(nonce=nonce, to=to, value=value, memo=memo)

@@ -1,5 +1,6 @@
 import struct
 from typing import Tuple
+import time
 
 from ledgercomm import Transport
 
@@ -108,34 +109,39 @@ class BoilerplateCommand:
         for is_last, chunk in self.builder.sign_tx(bip32_path=bip32_path, transaction=transaction):
             self.transport.send_raw(chunk)
 
+            # Make sure we wait until transaction is displayed
+            time.sleep(1)
+
             if is_last:
                 # Review Transaction
                 button.right_click()
-                # Address 1/3, 2/3, 3/3
-                button.right_click()
-                button.right_click()
-                button.right_click()
+                time.sleep(1)
                 # Amount
                 button.right_click()
+                time.sleep(1)
+                # Address 1/3, 2/3, 3/3
+                button.right_click()
+                time.sleep(1)
+                button.right_click()
+                time.sleep(1)
+                button.right_click()
+                time.sleep(1)
+                # Nonce
+                button.right_click()
+                time.sleep(1)
+                # Network
+                button.right_click()
+                time.sleep(1)
+                # Fees
+                button.right_click()
+                time.sleep(1)
                 # Approve
                 button.both_click()
+                time.sleep(1)
 
             sw, response = self.transport.recv()  # type: int, bytes
 
             if sw != 0x9000:
                 raise DeviceException(error_code=sw, ins=InsType.INS_SIGN_TX)
 
-        # response = der_sig_len (1) ||
-        #            der_sig (var) ||
-        #            v (1)
-        offset: int = 0
-        der_sig_len: int = response[offset]
-        offset += 1
-        der_sig: bytes = response[offset:offset + der_sig_len]
-        offset += der_sig_len
-        v: int = response[offset]
-        offset += 1
-
-        assert len(response) == 1 + der_sig_len + 1
-
-        return v, der_sig
+        return response[:1], response[1:]
