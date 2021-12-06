@@ -32,6 +32,7 @@ void ui_action_validate_pubkey(bool choice) {
         io_send_sw(SW_DENY);
     }
 
+    reset_app_context();
     ui_menu_main();
 }
 

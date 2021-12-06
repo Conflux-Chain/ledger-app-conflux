@@ -26,21 +26,42 @@
 #include "common/buffer.h"
 
 int helper_send_response_pubkey() {
-    uint8_t resp[1 + 1 + PUBKEY_LEN + 1 + CHAINCODE_LEN] = {0};
+    // uint8_t resp[1 + 1 + PUBKEY_LEN + 1 + CHAINCODE_LEN] = {0};
     size_t offset = 0;
 
-    resp[offset++] = PUBKEY_LEN + 1;
-    resp[offset++] = 0x04;
-    memmove(resp + offset, G_context.pk_info.raw_public_key, PUBKEY_LEN);
+    // resp[offset++] = PUBKEY_LEN + 1;
+    // resp[offset++] = 0x04;
+    // memmove(resp + offset, G_context.pk_info.raw_public_key, PUBKEY_LEN);
+    // offset += PUBKEY_LEN;
+
+    // if (G_context.pk_info.get_chaincode) {
+    //     resp[offset++] = CHAINCODE_LEN;
+    //     memmove(resp + offset, G_context.pk_info.chain_code, CHAINCODE_LEN);
+    //     offset += CHAINCODE_LEN;
+    // }
+
+    // return io_send_response(&(const buffer_t){.ptr = resp, .size = offset, .offset = 0}, SW_OK);
+
+
+    G_io_apdu_buffer[offset++] = PUBKEY_LEN + 1;
+    G_io_apdu_buffer[offset++] = 0x04;
+
+    memmove(G_io_apdu_buffer + offset, G_context.pk_info.raw_public_key, PUBKEY_LEN);
     offset += PUBKEY_LEN;
 
     if (G_context.pk_info.get_chaincode) {
-        resp[offset++] = CHAINCODE_LEN;
-        memmove(resp + offset, G_context.pk_info.chain_code, CHAINCODE_LEN);
+        G_io_apdu_buffer[offset++] = CHAINCODE_LEN;
+        memmove(G_io_apdu_buffer + offset, G_context.pk_info.chain_code, CHAINCODE_LEN);
         offset += CHAINCODE_LEN;
     }
 
-    return io_send_response(&(const buffer_t){.ptr = resp, .size = offset, .offset = 0}, SW_OK);
+    G_io_apdu_buffer[offset++] = 0x90;
+    G_io_apdu_buffer[offset++] = 0x00;
+
+    // Send back the response, do not restart the event loop
+    // io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, tx);
+    io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, offset);
+    return 0;
 }
 
 // int helper_send_response_sig() {

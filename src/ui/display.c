@@ -98,6 +98,8 @@ int ui_display_address() {
         return io_send_sw(SW_BAD_STATE);
     }
 
+    io_seproxyhal_io_heartbeat();
+
     memset(g_bip32_path, 0, sizeof(g_bip32_path));
     if (!bip32_path_format(G_context.bip32_path,
                            G_context.bip32_path_len,
@@ -106,11 +108,15 @@ int ui_display_address() {
         return io_send_sw(SW_DISPLAY_BIP32_PATH_FAIL);
     }
 
+    io_seproxyhal_io_heartbeat();
+
     memset(g_address, 0, sizeof(g_address));
     uint8_t address[ADDRESS_LEN] = {0};
     if (!address_from_pubkey(G_context.pk_info.raw_public_key, address, sizeof(address))) {
         return io_send_sw(SW_DISPLAY_ADDRESS_FAIL);
     }
+
+    io_seproxyhal_io_heartbeat();
 
     cfxaddr_encode(address, strings.common.fullAddress, sizeof(strings.common.fullAddress), G_context.pk_info.chain_id);
 
@@ -235,7 +241,7 @@ void prepareDisplayTransaction() {
     PRINTF("Network: %s\n", strings.common.network_name);
 
     g_validate_callback = &ui_action_validate_transaction;
-    ux_approve_tx(false);
+    ux_approve_tx();
 }
 
 void prepareNetworkDisplay() {
