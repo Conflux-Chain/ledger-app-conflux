@@ -22,4 +22,4 @@
  * @return zero or positive integer if success, negative integer otherwise.
  *
  */
-int handler_get_public_key(buffer_t *cdata, bool display);
+int handler_get_public_key(buffer_t *cdata, bool display, bool get_chaincode);
