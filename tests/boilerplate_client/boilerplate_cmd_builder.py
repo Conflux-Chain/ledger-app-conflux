@@ -29,10 +29,10 @@ def chunkify(data: bytes, chunk_len: int) -> Iterator[Tuple[bool, bytes]]:
 
 
 class InsType(enum.IntEnum):
-    INS_GET_VERSION = 0x03
-    INS_GET_APP_NAME = 0x04
-    INS_GET_PUBLIC_KEY = 0x05
-    INS_SIGN_TX = 0x06
+    INS_GET_PUBLIC_KEY = 0x02
+    INS_SIGN_TX = 0x03
+    INS_GET_VERSION = 0x04
+    INS_GET_APP_NAME = 0x05
 
 
 class BoilerplateCommandBuilder:
