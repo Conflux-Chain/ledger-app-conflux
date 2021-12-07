@@ -40,10 +40,7 @@ class Transaction:
         if not (0 <= self.nonce <= UINT64_MAX):
             raise TransactionError(f"Bad nonce: '{self.nonce}'!")
 
-        if not (0 <= self.value <= UINT64_MAX):
-            raise TransactionError(f"Bad value: '{self.value}'!")
-
-        if len(self.to) != 40:
+        if len(self.to) != 40 and len(self.to) != 0:
             raise TransactionError(f"Bad address: '{self.to}'!")
 
     def serialize(self) -> bytes:
