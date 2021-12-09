@@ -108,7 +108,7 @@ class BoilerplateCommand:
         assert len(response) == 1 + pub_key_len + 1 + chain_code_len
         return pub_key, chain_code
 
-    def sign_tx(self, bip32_path: str, transaction: Transaction, button: Button, num_clicks: int = 8) -> Tuple[int, bytes]:
+    def sign_tx(self, bip32_path: str, transaction: Transaction, button: Button, num_clicks: int = 6) -> Tuple[int, bytes]:
         sw: int
         response: bytes = b""
 

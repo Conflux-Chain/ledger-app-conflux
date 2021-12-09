@@ -70,6 +70,7 @@ void ui_menu_about() {
 
 const char* const settings_submenu_getter_values[] = {
   "Allow blind sign",
+  "Detailed display",
   "Back",
 };
 
@@ -112,10 +113,39 @@ void allow_blind_sign_data_selector(unsigned int idx) {
   }
 }
 
+static const char* allow_detailed_display_data_getter(unsigned int idx) {
+  if (idx < ARRAYLEN(no_yes_data_getter_values)) {
+    return no_yes_data_getter_values[idx];
+  }
+  return NULL;
+}
+
+static void allow_detailed_display_data_change(enum BlindSign blind_sign) {
+    uint8_t value = (uint8_t) blind_sign;
+    nvm_write((void *)&N_storage.settings.allow_detailed_display, &value, sizeof(value));
+    ui_menu_main();
+}
+
+void allow_detailed_display_data_selector(unsigned int idx) {
+  switch(idx) {
+    case 0:
+      allow_detailed_display_data_change(BlindSignDisabled);
+      break;
+    case 1:
+      allow_detailed_display_data_change(BlindSignEnabled);
+      break;
+    default:
+      ui_menu_main();
+  }
+}
+
 void settings_submenu_selector(unsigned int idx) {
   switch(idx) {
     case 0:
       ux_menulist_init_select(0, allow_blind_sign_data_getter, allow_blind_sign_data_selector, N_storage.settings.allow_blind_sign);
+      break;
+    case 1:
+      ux_menulist_init_select(0, allow_detailed_display_data_getter, allow_detailed_display_data_selector, N_storage.settings.allow_detailed_display);
       break;
     default:
       ui_menu_main();

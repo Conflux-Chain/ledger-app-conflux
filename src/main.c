@@ -43,6 +43,7 @@ void init_storage() {
     if (N_storage.initialized != 0x01) {
         internalStorage_t storage;
         storage.settings.allow_blind_sign = BlindSignDisabled;
+        storage.settings.allow_detailed_display = DetailedDisplayDisabled;
         storage.initialized = 0x01;
 
         nvm_write(
@@ -56,6 +57,7 @@ void init_storage() {
 void reset_app_context() {
     appState = APP_STATE_IDLE;
     memset((uint8_t *) &G_context, 0, sizeof(G_context));
+    ui_menu_main();
 }
 
 /**
@@ -110,8 +112,22 @@ void app_main() {
                 THROW(EXCEPTION_IO_RESET);
             }
             CATCH_OTHER(e) {
-                // TODO: call `reset_app_context` for 0x6~ errors?
-                io_send_sw(e);
+                switch (e & 0xF000) {
+                    case 0x6000:
+                        // Wipe the transaction context and report the exception
+                        reset_app_context();
+                        io_send_sw(e);
+                        break;
+                    case 0x9000:
+                        // All is well
+                        io_send_sw(e);
+                        break;
+                    default:
+                        // Internal error
+                        io_send_sw(e);
+                        reset_app_context();
+                        break;
+                }
             }
             FINALLY {
             }

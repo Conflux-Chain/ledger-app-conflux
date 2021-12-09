@@ -8,24 +8,38 @@ from ecdsa.util import sigdecode_string
 from boilerplate_client.transaction import Transaction
 from boilerplate_client.utils import (UINT64_MAX)
 
-def check_transaction(cmd, button, bip32_path, tx, num_clicks=8):
+def enable_blind_sign(button):
+    # enter Settings
+    button.right_click()
+    button.both_click()
+
+    # enter "Allow blind sign"
+    button.both_click()
+
+    # if "No" => "Yes", if "Yes" => "Back"
+    button.right_click()
+    button.both_click()
+
+def check_transaction(cmd, button, bip32_path, tx, num_clicks=6):
     pub_key, chain_code = cmd.get_public_key(bip32_path=bip32_path)
     pk: VerifyingKey = VerifyingKey.from_string(pub_key, curve=SECP256k1, hashfunc=sha256)
     v, sig = cmd.sign_tx(bip32_path=bip32_path, transaction=tx, button=button, num_clicks=num_clicks)
     assert pk.verify(signature=sig, data=tx.serialize(), hashfunc=keccak_256, sigdecode=sigdecode_string) is True
 
 def test_sign_tx(cmd, button):
+    enable_blind_sign(button)
+
     check_transaction(cmd, button, "m/44'/503'/0'/0/0", Transaction(
         nonce=0,
         gasPrice=0,
         gasLimit=0,
-        to="10109fC8DF283027b6285cc889F5aA624EaC1F55", # TODO
+        to="",
         value=0,
         storageLimit=0,
         epochHeight=0,
         chainId=0,
-        data= ''
-    ))
+        data= ""
+    ), num_clicks=4)
 
     check_transaction(cmd, button, "m/44'/503'/0'/0/1", Transaction(
         nonce=0x98967f, # max nonce displayed correctly
