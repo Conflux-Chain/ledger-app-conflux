@@ -142,7 +142,7 @@ class BoilerplateCommandBuilder:
                               p2=0x00,
                               cdata=b"")
 
-    def get_public_key(self, bip32_path: str, display: bool = False) -> bytes:
+    def get_public_key(self, bip32_path: str, display: bool = False, getChaincode: bool = False) -> bytes:
         """Command builder for GET_PUBLIC_KEY.
 
         Parameters
@@ -169,7 +169,7 @@ class BoilerplateCommandBuilder:
         return self.serialize(cla=self.CLA,
                               ins=InsType.INS_GET_PUBLIC_KEY,
                               p1=0x01 if display else 0x00,
-                              p2=0x01, # return chaincode
+                              p2=0x01 if getChaincode else 0x00,
                               cdata=cdata)
 
     def sign_tx(self, bip32_path: str, transaction: Transaction) -> Iterator[Tuple[bool, bytes]]:

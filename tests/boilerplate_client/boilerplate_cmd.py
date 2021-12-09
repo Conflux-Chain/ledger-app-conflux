@@ -74,10 +74,11 @@ class BoilerplateCommand:
 
         return response.decode("ascii")
 
-    def get_public_key(self, bip32_path: str, display: bool = False) -> Tuple[bytes, bytes]:
+    def get_public_key(self, bip32_path: str, display: bool = False, getChaincode: bool = False) -> Tuple[bytes, bytes]:
         sw, response = self.transport.exchange_raw(
             self.builder.get_public_key(bip32_path=bip32_path,
-                                        display=display)
+                                        display=display,
+                                        getChaincode=getChaincode)
         )  # type: int, bytes
 
         if sw != 0x9000:
@@ -95,16 +96,19 @@ class BoilerplateCommand:
         offset += pub_key_len
 
         # TODO: ignore when not returned
-        chain_code_len: int = response[offset]
-        offset += 1
-        chain_code: bytes = response[offset:offset + chain_code_len]
-        offset += chain_code_len
+        chain_code: bytes = b""
+        chain_code_len: int = -1
+
+        if getChaincode:
+            chain_code_len = response[offset]
+            offset += 1
+            chain_code = response[offset:offset + chain_code_len]
+            offset += chain_code_len
 
         assert len(response) == 1 + pub_key_len + 1 + chain_code_len
-
         return pub_key, chain_code
 
-    def sign_tx(self, bip32_path: str, transaction: Transaction, button: Button) -> Tuple[int, bytes]:
+    def sign_tx(self, bip32_path: str, transaction: Transaction, button: Button, num_clicks: int = 8) -> Tuple[int, bytes]:
         sw: int
         response: bytes = b""
 
@@ -112,34 +116,15 @@ class BoilerplateCommand:
             self.transport.send_raw(chunk)
 
             # Make sure we wait until transaction is displayed
-            time.sleep(1)
+            time.sleep(0.5)
 
             if is_last:
-                # Review Transaction
-                button.right_click()
-                time.sleep(1)
-                # Amount
-                button.right_click()
-                time.sleep(1)
-                # Address 1/3, 2/3, 3/3
-                button.right_click()
-                time.sleep(1)
-                button.right_click()
-                time.sleep(1)
-                button.right_click()
-                time.sleep(1)
-                # Nonce
-                button.right_click()
-                time.sleep(1)
-                # Network
-                button.right_click()
-                time.sleep(1)
-                # Fees
-                button.right_click()
-                time.sleep(1)
-                # Approve
+                for _ in range(num_clicks):
+                    button.right_click()
+                    time.sleep(0.5)
+
                 button.both_click()
-                time.sleep(1)
+                time.sleep(0.5)
 
             sw, response = self.transport.recv()  # type: int, bytes
 

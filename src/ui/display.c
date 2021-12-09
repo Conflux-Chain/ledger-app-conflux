@@ -219,7 +219,7 @@ void prepareDisplayTransaction() {
 
         cfxaddr_encode(G_context.tx_content.destination, strings.common.fullAddress, sizeof(strings.common.fullAddress), chain_id);
     } else {
-        strcpy(strings.common.fullAddress, "Contract");
+        strcpy(strings.common.fullAddress, "New contract");
     }
 
     // Prepare amount to display
