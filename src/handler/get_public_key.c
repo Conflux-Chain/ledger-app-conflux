@@ -30,7 +30,7 @@
 #include "../sw.h"
 #include "../crypto.h"
 #include "../common/buffer.h"
-#include "../ui/display.h"
+#include "../ui/menu.h"
 #include "../helper/send_response.h"
 
 int handler_get_public_key(buffer_t *cdata, bool display, bool get_chaincode) {
@@ -70,7 +70,8 @@ int handler_get_public_key(buffer_t *cdata, bool display, bool get_chaincode) {
     explicit_bzero(&private_key, sizeof(private_key));
 
     if (display) {
-        return ui_display_address();
+        ui_get_pubkey();
+        return 0;
     }
 
     io_seproxyhal_io_heartbeat();

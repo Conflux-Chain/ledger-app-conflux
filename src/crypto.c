@@ -69,6 +69,36 @@ int crypto_init_public_key(cx_ecfp_private_key_t *private_key,
     return 0;
 }
 
+int crypto_derive_public_key(const uint32_t *bip32_path,
+                             uint8_t bip32_path_len,
+                             uint8_t raw_public_key[static 64]) {
+    cx_ecfp_private_key_t private_key = {0};
+    cx_ecfp_public_key_t public_key = {0};
+    uint8_t chain_code[32] = {0};
+
+    BEGIN_TRY {
+        TRY {
+            io_seproxyhal_io_heartbeat();
+
+            // derive private key according to BIP32 path
+            crypto_derive_private_key(&private_key, chain_code, bip32_path, bip32_path_len);
+
+            io_seproxyhal_io_heartbeat();
+            crypto_init_public_key(&private_key, &public_key, raw_public_key);
+            io_seproxyhal_io_heartbeat();
+        }
+        CATCH_OTHER(e) {
+            THROW(e);
+        }
+        FINALLY {
+            explicit_bzero(&private_key, sizeof(private_key));
+        }
+    }
+    END_TRY;
+
+    return 0;
+}
+
 int crypto_sign_message() {
     cx_ecfp_private_key_t private_key = {0};
     uint8_t chain_code[32] = {0};
@@ -110,7 +140,7 @@ int crypto_sign_message() {
     }
 
     G_context.tx_info.signature_len = sig_len;
-    G_context.tx_info.v = (uint8_t)(info & CX_ECCINFO_PARITY_ODD);
+    G_context.tx_info.v = (uint8_t) (info & CX_ECCINFO_PARITY_ODD);
 
     return 0;
 }

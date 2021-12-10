@@ -59,3 +59,7 @@ int crypto_init_public_key(cx_ecfp_private_key_t *private_key,
  *
  */
 int crypto_sign_message(void);
+
+int crypto_derive_public_key(const uint32_t *bip32_path,
+                             uint8_t bip32_path_len,
+                             uint8_t raw_public_key[static 64]);

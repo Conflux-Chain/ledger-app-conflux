@@ -53,9 +53,9 @@ enum BlindSign {
     BlindSignEnabled = 1,
 };
 
-enum DetailedDisplay {
-    DetailedDisplayDisabled = 0,
-    DetailedDisplayEnabled = 1,
+enum DisplayStyle {
+    DisplayStyleSimple = 0,
+    DisplayStyleDetailed = 1,
 };
 
 typedef struct internalStorage_t {

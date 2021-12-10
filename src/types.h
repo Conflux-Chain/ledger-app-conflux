@@ -104,14 +104,28 @@ typedef enum {
     APP_STATE_SIGNING_MESSAGE
 } app_state_t;
 
-typedef struct txStringProperties_t {
-    char fullAddress[52];
-    char fullAmount[79];  // 2^256 is 78 digits long
-    char maxFee[50];
+typedef struct settings_strings_t {
+    char blind_signing[15];
+    char display_style[15];
+} settings_strings_t;
+
+typedef struct get_pubkey_strings_t {
+    char bip32_path[60];
+    char address[52];
+} get_pubkey_strings_t;
+
+typedef struct sign_tx_strings_t {
+    char sender_address[52];
+    char receiver_address[52];
+    char full_amount[79];  // 2^256 is 78 digits long
+    char max_fee[50];
     char nonce[8];  // 10M tx per account ought to be enough for everybody
     char network_name[NETWORK_STRING_MAX_SIZE];
-} txStringProperties_t;
+    char data[14];
+} sign_tx_strings_t;
 
 typedef union {
-    txStringProperties_t common;
+    settings_strings_t settings;
+    get_pubkey_strings_t get_pubkey;
+    sign_tx_strings_t sign_tx;
 } strings_t;

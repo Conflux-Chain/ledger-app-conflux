@@ -9,29 +9,17 @@ from boilerplate_client.exception import DeviceException
 from boilerplate_client.transaction import Transaction
 from boilerplate_client.utils import (UINT64_MAX)
 
-def enable_blind_sign(button):
+def toggle_blind_sign(button):
     # enter Settings
     button.right_click()
     button.both_click()
 
-    # enter "Allow blind sign"
+    # toggle
     button.both_click()
 
-    # if "No" => "Yes", if "Yes" => "Back"
+    # back
     button.right_click()
-    button.both_click()
-
-def disable_blind_sign(button):
-    # enter Settings
     button.right_click()
-    button.both_click()
-
-    # enter "Allow blind sign"
-    button.both_click()
-
-    # select "No"
-    button.left_click()
-    button.left_click()
     button.both_click()
 
 def check_transaction(cmd, button, bip32_path, tx, num_clicks=6):
@@ -51,7 +39,7 @@ def check_transaction_fails(cmd, button, bip32_path, tx, num_clicks=6):
         pass
 
 def test_sign_tx_blind_sign_disabled(cmd, button):
-    disable_blind_sign(button)
+    # toggle_blind_sign(button)
 
     # can blind sign simple transfer
     check_transaction(cmd, button, "m/44'/503'/0'/0/0", num_clicks=4, tx=Transaction())
@@ -63,7 +51,7 @@ def test_sign_tx_blind_sign_disabled(cmd, button):
     ))
 
 def test_sign_tx_blind_sign_enabled(cmd, button):
-    enable_blind_sign(button)
+    toggle_blind_sign(button)
 
     check_transaction(cmd, button, "m/44'/503'/0'/0/0", num_clicks=4, tx=Transaction())
 

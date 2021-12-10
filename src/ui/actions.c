@@ -1,6 +1,6 @@
 /*****************************************************************************
- *   Ledger App Boilerplate.
- *   (c) 2020 Ledger SAS.
+ *   app-conflux: Conlfux Ledger App.
+ *   (c) 2021 Conflux Foundation.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,21 +15,39 @@
  *  limitations under the License.
  *****************************************************************************/
 
-#include <stdbool.h>  // bool
+#include "os.h"
 
-#include "validate.h"
-#include "../menu.h"
-#include "../../sw.h"
-#include "../../io.h"
-#include "../../crypto.h"
-#include "../../globals.h"
-#include "../../helper/send_response.h"
+#include "actions.h"
+#include "crypto.h"
+#include "globals.h"
+#include "helper/send_response.h"
+#include "io.h"
+#include "menu.h"
+#include "steps.h"
+#include "sw.h"
+
+action_validate_cb_t g_validate_callback;
+
+void ui_action_toggle_settings_blind_signing() {
+    uint8_t newValue = (N_storage.settings.allow_blind_sign ? BlindSignDisabled : BlindSignEnabled);
+    nvm_write((void*) &N_storage.settings.allow_blind_sign, (void*) &newValue, sizeof(uint8_t));
+    return ui_menu_settings(&ux_step_settings_blind_sign);
+}
+
+void ui_action_toggle_settings_detailed_display() {
+    uint8_t newValue =
+        (N_storage.settings.allow_detailed_display ? DisplayStyleSimple : DisplayStyleDetailed);
+    nvm_write((void*) &N_storage.settings.allow_detailed_display,
+              (void*) &newValue,
+              sizeof(uint8_t));
+    return ui_menu_settings(&ux_step_settings_display_style);
+}
 
 void ui_action_validate_pubkey(bool choice) {
     if (choice) {
         helper_send_response_pubkey();
     } else {
-        io_send_sw(SW_DENY);
+        THROW(SW_DENY);
     }
 
     reset_app_context();
@@ -37,21 +55,17 @@ void ui_action_validate_pubkey(bool choice) {
 }
 
 void ui_action_validate_transaction(bool choice) {
-    // TODO
-    io_seproxyhal_io_heartbeat();
-
     if (choice) {
         G_context.state = STATE_APPROVED;
 
         if (crypto_sign_message() < 0) {
-            // G_context.state = STATE_NONE;
-            io_send_sw(SW_SIGNATURE_FAIL);
+            THROW(SW_SIGNATURE_FAIL);
         } else {
             helper_send_response_sig(G_context.tx_info.signature);
         }
     } else {
         G_context.state = STATE_NONE;
-        io_send_sw(SW_DENY);
+        THROW(SW_DENY);
     }
 
     reset_app_context();

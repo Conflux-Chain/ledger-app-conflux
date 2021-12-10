@@ -259,18 +259,31 @@ static void processData(txContext_t *context) {
         THROW(EXCEPTION);
     }
 
+    // extract function selector
+    if (context->currentFieldPos < SELECTOR_LENGTH && context->currentFieldLength > 0) {
+        context->content->data_length = context->currentFieldLength;
+
+        uint32_t copySize = MIN(
+            context->commandLength,
+            MIN(context->currentFieldLength, SELECTOR_LENGTH - context->currentFieldPos)
+        );
+
+        memmove(context->content->selector + context->currentFieldPos, context->workBuffer, copySize);
+    }
+
     if (context->currentFieldPos < context->currentFieldLength) {
         // TODO: check for corner cases
-        context->content->dataPresent = true;
+        context->content->data_present = true;
 
         uint32_t copySize =
             MIN(context->commandLength, context->currentFieldLength - context->currentFieldPos);
-        // If there is no data, set dataPresent to false.
+        // If there is no data, set data_present to false.
         if (copySize == 1 && *context->workBuffer == 0x00) {
-            context->content->dataPresent = false;
+            context->content->data_present = false;
         }
         copyTxData(context, NULL, copySize);
     }
+
     if (context->currentFieldPos == context->currentFieldLength) {
         PRINTF("incrementing field\n");
         context->currentField++;

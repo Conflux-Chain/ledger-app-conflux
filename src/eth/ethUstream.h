@@ -37,6 +37,7 @@ typedef customStatus_e (*ustreamProcess_t)(struct txContext_t *context);
 
 #define TX_FLAG_TYPE   0x01
 #define ADDRESS_LENGTH 20
+#define SELECTOR_LENGTH 4
 #define INT256_LENGTH  32
 
 // First variant of every Tx enum.
@@ -81,11 +82,13 @@ typedef struct txContent_t {
     txInt256_t chainid;
     txInt256_t storagelimit;
     txInt256_t epochheight;
+    uint8_t selector[SELECTOR_LENGTH];
+    uint8_t data_length;
     uint8_t destination[ADDRESS_LENGTH];
     uint8_t destinationLength;
     uint8_t v[8];
     uint8_t vLength;
-    bool dataPresent;
+    bool data_present;
 } txContent_t;
 
 typedef struct txContext_t {
