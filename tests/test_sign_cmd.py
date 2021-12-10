@@ -5,6 +5,7 @@ from ecdsa.curves import SECP256k1
 from ecdsa.keys import VerifyingKey
 from ecdsa.util import sigdecode_string
 
+from boilerplate_client.exception import DeviceException
 from boilerplate_client.transaction import Transaction
 from boilerplate_client.utils import (UINT64_MAX)
 
@@ -20,26 +21,56 @@ def enable_blind_sign(button):
     button.right_click()
     button.both_click()
 
+def disable_blind_sign(button):
+    # enter Settings
+    button.right_click()
+    button.both_click()
+
+    # enter "Allow blind sign"
+    button.both_click()
+
+    # select "No"
+    button.left_click()
+    button.left_click()
+    button.both_click()
+
 def check_transaction(cmd, button, bip32_path, tx, num_clicks=6):
     pub_key, chain_code = cmd.get_public_key(bip32_path=bip32_path)
     pk: VerifyingKey = VerifyingKey.from_string(pub_key, curve=SECP256k1, hashfunc=sha256)
     v, sig = cmd.sign_tx(bip32_path=bip32_path, transaction=tx, button=button, num_clicks=num_clicks)
     assert pk.verify(signature=sig, data=tx.serialize(), hashfunc=keccak_256, sigdecode=sigdecode_string) is True
 
-def test_sign_tx(cmd, button):
+def check_transaction_fails(cmd, button, bip32_path, tx, num_clicks=6):
+    pub_key, chain_code = cmd.get_public_key(bip32_path=bip32_path)
+    pk: VerifyingKey = VerifyingKey.from_string(pub_key, curve=SECP256k1, hashfunc=sha256)
+
+    try:
+        v, sig = cmd.sign_tx(bip32_path=bip32_path, transaction=tx, button=button, num_clicks=num_clicks)
+        assert(False)
+    except:
+        pass
+
+def test_sign_tx_blind_sign_disabled(cmd, button):
+    disable_blind_sign(button)
+
+    # can blind sign simple transfer
+    check_transaction(cmd, button, "m/44'/503'/0'/0/0", num_clicks=4, tx=Transaction())
+
+    # cannot blind sign contract call
+    check_transaction_fails(cmd, button, "m/44'/503'/0'/0/0", num_clicks=0, tx=Transaction(
+        to="85d68694f81eE2389E7f910937f9A606615Df6FD",
+        data= "d333638f"
+    ))
+
+def test_sign_tx_blind_sign_enabled(cmd, button):
     enable_blind_sign(button)
 
-    check_transaction(cmd, button, "m/44'/503'/0'/0/0", Transaction(
-        nonce=0,
-        gasPrice=0,
-        gasLimit=0,
-        to="",
-        value=0,
-        storageLimit=0,
-        epochHeight=0,
-        chainId=0,
-        data= ""
-    ), num_clicks=4)
+    check_transaction(cmd, button, "m/44'/503'/0'/0/0", num_clicks=4, tx=Transaction())
+
+    check_transaction_fails(cmd, button, "m/44'/503'/0'/0/0", Transaction(
+        to="85d68694f81eE2389E7f910937f9A606615Df6FD",
+        data= "d333638f"
+    ))
 
     check_transaction(cmd, button, "m/44'/503'/0'/0/1", Transaction(
         nonce=0x98967f, # max nonce displayed correctly
@@ -68,4 +99,10 @@ def test_sign_tx(cmd, button):
         epochHeight=1,
         chainId=1029,
         data= ''
+    ))
+
+    # do not support > 0xffff chain ID
+    check_transaction_fails(cmd, button, "m/44'/503'/0'/0/0", num_clicks=0, tx=Transaction(
+        to="10109fC8DF283027b6285cc889F5aA624EaC1F55",
+        chainId=0x10000
     ))
