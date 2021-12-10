@@ -45,11 +45,17 @@ extern global_ctx_t G_context;
  */
 typedef struct AppSettings {
     uint8_t allow_blind_sign;
+    uint8_t allow_detailed_display;
 } AppSettings;
 
 enum BlindSign {
     BlindSignDisabled = 0,
     BlindSignEnabled = 1,
+};
+
+enum DetailedDisplay {
+    DetailedDisplayDisabled = 0,
+    DetailedDisplayEnabled = 1,
 };
 
 typedef struct internalStorage_t {

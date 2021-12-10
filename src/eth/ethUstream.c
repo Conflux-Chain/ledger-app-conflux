@@ -258,8 +258,11 @@ static void processData(txContext_t *context) {
         PRINTF("Invalid type for RLP_DATA\n");
         THROW(EXCEPTION);
     }
-    // TODO: set dataPresent
+
     if (context->currentFieldPos < context->currentFieldLength) {
+        // TODO: check for corner cases
+        context->content->dataPresent = true;
+
         uint32_t copySize =
             MIN(context->commandLength, context->currentFieldLength - context->currentFieldPos);
         // If there is no data, set dataPresent to false.

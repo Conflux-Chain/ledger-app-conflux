@@ -17,15 +17,15 @@ class TransactionError(Exception):
 class Transaction:
     def __init__(
         self,
-        nonce: int,
-        gasPrice: int,
-        gasLimit: int,
-        to: str,
-        value: int,
-        data: str,
-        storageLimit: int,
-        epochHeight: int,
-        chainId: int
+        nonce: int = 0,
+        gasPrice: int = 0,
+        gasLimit: int = 0,
+        to: str = "",
+        value: int = 0,
+        data: str = "",
+        storageLimit: int = 0,
+        epochHeight: int = 0,
+        chainId: int = 0
     ) -> None:
         self.nonce: int = nonce
         self.gasPrice: int = gasPrice

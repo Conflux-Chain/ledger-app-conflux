@@ -195,7 +195,25 @@ void prepareFeeDisplay();
 void prepareNetworkDisplay();
 void ux_approve_tx();
 
+
+void back_after_blind_sign() {
+    THROW(0x6a80);
+}
+
+UX_STEP_CB(ux_warn_blind_sign_step, pb, back_after_blind_sign(), {&C_icon_warning, "Blind sign disabled"});
+
+UX_FLOW(ux_reject_blind_sign, &ux_warn_blind_sign_step);
+
+void ux_reject_tx_blind_sign() {
+    ux_flow_init(0, ux_reject_blind_sign, NULL);
+}
+
 void prepareDisplayTransaction() {
+    // no blind signing
+    if (G_context.tx_content.dataPresent == true && !N_storage.settings.allow_blind_sign) {
+        return ux_reject_tx_blind_sign();
+    }
+
     char displayBuffer[52];
 
     // Store the hash
@@ -360,7 +378,7 @@ UX_STEP_NOCB(
     ux_approval_address_step,
     bnnn_paging,
     {
-      .title = "Address",
+      .title = "Receiver",
       .text = strings.common.fullAddress,
     });
 
@@ -407,16 +425,15 @@ void ux_approve_tx() {
     //     ux_approval_tx_flow[step++] = &ux_approval_blind_signing_warning_step;
     // }
 
-    ux_approval_tx_flow[step++] = &ux_approval_amount_step;
     ux_approval_tx_flow[step++] = &ux_approval_address_step;
-    ux_approval_tx_flow[step++] = &ux_approval_nonce_step;
-
-    // if (N_storage.displayNonce) {
-    //     ux_approval_tx_flow[step++] = &ux_approval_nonce_step;
-    // }
-
-    ux_approval_tx_flow[step++] = &ux_approval_network_step;
+    ux_approval_tx_flow[step++] = &ux_approval_amount_step;
     ux_approval_tx_flow[step++] = &ux_approval_fees_step;
+
+    if (N_storage.settings.allow_detailed_display) {
+        ux_approval_tx_flow[step++] = &ux_approval_nonce_step;
+        ux_approval_tx_flow[step++] = &ux_approval_network_step;
+    }
+
     ux_approval_tx_flow[step++] = &ux_approval_accept_step;
     ux_approval_tx_flow[step++] = &ux_approval_reject_step;
     ux_approval_tx_flow[step++] = FLOW_END_STEP;
