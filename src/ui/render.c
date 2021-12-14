@@ -38,19 +38,19 @@ void render_settings(settings_strings_t *strings) {
 void render_get_pubkey_path(char *out, size_t out_len) {
     memset(out, 0, out_len);
 
-    if (!bip32_path_format(G_context.bip32_path, G_context.bip32_path_len, out, out_len)) {
+    if (!bip32_path_format(G_context.get_pubkey.bip32_path, G_context.get_pubkey.bip32_path_len, out, out_len)) {
         THROW(SW_DISPLAY_BIP32_PATH_FAIL);
     }
 }
 
 void render_get_pubkey_address(char *out, size_t out_len) {
-    uint8_t address[ADDRESS_LEN] = {0x00};
+    uint8_t address[ADDRESS_LEN_BYTES] = {0x00};
 
-    if (!address_from_pubkey(G_context.pk_info.raw_public_key, address, sizeof(address))) {
+    if (!address_from_pubkey(G_context.get_pubkey.raw_public_key, address, sizeof(address))) {
         THROW(SW_DISPLAY_ADDRESS_FAIL);
     }
 
-    cfxaddr_encode(address, out, out_len, G_context.pk_info.chain_id);
+    cfxaddr_encode(address, out, out_len, G_context.get_pubkey.chain_id);
 }
 
 void render_get_pubkey(get_pubkey_strings_t *strings) {
@@ -59,8 +59,8 @@ void render_get_pubkey(get_pubkey_strings_t *strings) {
 }
 
 void render_sign_tx_sender(char *out, size_t out_len) {
-    uint64_t chain_id =
-        u64_from_BE(G_context.tx_content.chainid.value, G_context.tx_content.chainid.length);
+    uint64_t chain_id = u64_from_BE(G_context.sign_tx.transaction.chainid.value,
+                                    G_context.sign_tx.transaction.chainid.length);
 
     if (chain_id > 0xffff) {
         THROW(SW_CHAIN_ID_TOO_LARGE);
@@ -70,13 +70,13 @@ void render_sign_tx_sender(char *out, size_t out_len) {
     uint8_t raw_public_key[64];
     uint8_t chain_code[32];
 
-    crypto_derive_public_key(G_context.bip32_path,
-                             G_context.bip32_path_len,
+    crypto_derive_public_key(G_context.sign_tx.bip32_path,
+                             G_context.sign_tx.bip32_path_len,
                              raw_public_key,
                              chain_code);
 
     // derive address
-    uint8_t address[ADDRESS_LEN] = {0x00};
+    uint8_t address[ADDRESS_LEN_BYTES] = {0x00};
 
     if (!address_from_pubkey(raw_public_key, address, sizeof(address))) {
         THROW(SW_DISPLAY_ADDRESS_FAIL);
@@ -87,33 +87,33 @@ void render_sign_tx_sender(char *out, size_t out_len) {
 }
 
 void render_sign_tx_receiver(char *out, size_t out_len) {
-    if (G_context.tx_content.destinationLength == 0) {
+    if (G_context.sign_tx.transaction.destinationLength == 0) {
         strlcpy(out, "New contract", out_len);
         return;
     }
 
-    uint64_t chain_id =
-        u64_from_BE(G_context.tx_content.chainid.value, G_context.tx_content.chainid.length);
+    uint64_t chain_id = u64_from_BE(G_context.sign_tx.transaction.chainid.value,
+                                    G_context.sign_tx.transaction.chainid.length);
 
     if (chain_id > 0xffff) {
         THROW(SW_CHAIN_ID_TOO_LARGE);
     }
 
-    cfxaddr_encode(G_context.tx_content.destination, out, out_len, chain_id);
+    cfxaddr_encode(G_context.sign_tx.transaction.destination, out, out_len, chain_id);
 }
 
 void render_sign_tx_amount(char *out, size_t out_len) {
-    amountToString(G_context.tx_content.value.value,
-                   G_context.tx_content.value.length,
+    amountToString(G_context.sign_tx.transaction.value.value,
+                   G_context.sign_tx.transaction.value.length,
                    EXPONENT_SMALLEST_UNIT,
                    "CFX ",
                    out,
                    out_len);
 }
 
-static void computeFees(txInt256_t *BEgasPrice,
-                        txInt256_t *BEgasLimit,
-                        txInt256_t *BEstorageLimit,
+static void computeFees(tx_int256_t *BEgasPrice,
+                        tx_int256_t *BEgasLimit,
+                        tx_int256_t *BEstorageLimit,
                         uint256_t *output) {
     uint256_t gasPrice = {0};
     uint256_t gasLimit = {0};
@@ -173,9 +173,9 @@ static void feesToString(uint256_t *rawFee, char *displayBuffer, uint32_t displa
     displayBuffer[tickerOffset + i] = '\0';
 }
 
-void prepareAndCopyFees(txInt256_t *BEGasPrice,
-                        txInt256_t *BEGasLimit,
-                        txInt256_t *BEstorageLimit,
+void prepareAndCopyFees(tx_int256_t *BEGasPrice,
+                        tx_int256_t *BEGasLimit,
+                        tx_int256_t *BEstorageLimit,
                         char *displayBuffer,
                         uint32_t displayBufferSize) {
     uint256_t rawFee = {0};
@@ -184,22 +184,24 @@ void prepareAndCopyFees(txInt256_t *BEGasPrice,
 }
 
 void render_sign_tx_fee(char *out, size_t out_len) {
-    prepareAndCopyFees(&G_context.tx_content.gasprice,
-                       &G_context.tx_content.gaslimit,
-                       &G_context.tx_content.storagelimit,
+    prepareAndCopyFees(&G_context.sign_tx.transaction.gasprice,
+                       &G_context.sign_tx.transaction.gaslimit,
+                       &G_context.sign_tx.transaction.storagelimit,
                        out,
                        out_len);
 }
 
 void render_sign_tx_nonce(char *out, size_t out_len) {
     uint256_t nonce;
-    convertUint256BE(G_context.tx_content.nonce.value, G_context.tx_content.nonce.length, &nonce);
+    convertUint256BE(G_context.sign_tx.transaction.nonce.value,
+                     G_context.sign_tx.transaction.nonce.length,
+                     &nonce);
     tostring256(&nonce, 10, out, out_len);
 }
 
 void render_sign_tx_network(char *out, size_t out_len) {
-    uint64_t chain_id =
-        u64_from_BE(G_context.tx_content.chainid.value, G_context.tx_content.chainid.length);
+    uint64_t chain_id = u64_from_BE(G_context.sign_tx.transaction.chainid.value,
+                                    G_context.sign_tx.transaction.chainid.length);
 
     switch (chain_id) {
         case CONFLUX_MAINNET_CHAINID:
@@ -222,14 +224,14 @@ void render_sign_tx_data(char *out, size_t out_len) {
     out += 2;
     out_len -= 2;
 
-    if (G_context.tx_content.data_length > 0) {
-        uint8_t len = MIN(SELECTOR_LENGTH, G_context.tx_content.data_length);
-        format_hex(G_context.tx_content.selector, len, out, out_len);
+    if (G_context.sign_tx.transaction.data_length > 0) {
+        uint8_t len = MIN(SELECTOR_LENGTH, G_context.sign_tx.transaction.data_length);
+        format_hex(G_context.sign_tx.transaction.selector, len, out, out_len);
         out += 2 * len;
         out_len -= 2 * len;
     }
 
-    if (G_context.tx_content.data_length > SELECTOR_LENGTH) {
+    if (G_context.sign_tx.transaction.data_length > SELECTOR_LENGTH) {
         strlcpy(out, "...", out_len);
     }
 }

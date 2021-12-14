@@ -31,7 +31,17 @@
 #define EXPONENT_SMALLEST_UNIT 18
 
 /**
- * Well-known Conflux chain IDs
+ * Well-known Conflux chain IDs.
  */
 #define CONFLUX_MAINNET_CHAINID 1029
 #define CONFLUX_TESTNET_CHAINID 1
+
+/**
+ * Address length in binary representation.
+ */
+#define ADDRESS_LEN_BYTES 20
+
+/**
+ * Maximum length of Conflux CIP-37 addresses.
+ */
+#define CONFLUX_ADDRESS_MAX_LEN 52

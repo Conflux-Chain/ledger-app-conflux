@@ -56,15 +56,15 @@ void ui_action_validate_pubkey(bool choice) {
 
 void ui_action_validate_transaction(bool choice) {
     if (choice) {
-        G_context.state = STATE_APPROVED;
+        G_context.app_state = APP_STATE_IDLE;
 
         if (crypto_sign_message() < 0) {
             THROW(SW_SIGNATURE_FAIL);
         } else {
-            helper_send_response_sig(G_context.tx_info.signature);
+            helper_send_response_sig(G_context.sign_tx.signature);
         }
     } else {
-        G_context.state = STATE_NONE;
+        G_context.app_state = APP_STATE_IDLE;
         THROW(SW_DENY);
     }
 

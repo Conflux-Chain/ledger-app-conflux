@@ -45,8 +45,8 @@ void ui_menu_settings(const ux_flow_step_t* const start_step) {
 }
 
 void ui_get_pubkey() {
-    if (G_context.req_type != CONFIRM_ADDRESS || G_context.state != STATE_NONE) {
-        G_context.state = STATE_NONE;
+    if (G_context.app_state != APP_STATE_GETTING_PUBKEY) {
+        G_context.app_state = APP_STATE_IDLE;
         THROW(SW_BAD_STATE);
     }
 
@@ -56,20 +56,25 @@ void ui_get_pubkey() {
 }
 
 void ui_sign_tx() {
+    if (G_context.app_state != APP_STATE_SIGNING_TX) {
+        G_context.app_state = APP_STATE_IDLE;
+        THROW(SW_BAD_STATE);
+    }
+
     // no blind signing
-    if (G_context.tx_content.data_present && !N_storage.settings.allow_blind_sign) {
+    if (G_context.sign_tx.transaction.data_present && !N_storage.settings.allow_blind_sign) {
         return ux_flow_init(0, ux_flow_error_blind_sign, NULL);
     }
 
     // store the hash
     cx_hash((cx_hash_t*) &global_sha3,
             CX_LAST,
-            G_context.tx_info.m_hash,
+            G_context.sign_tx.m_hash,
             0,
-            G_context.tx_info.m_hash,
+            G_context.sign_tx.m_hash,
             32);
 
-    PRINTF("Hash: %.*H\n", INT256_LENGTH, G_context.tx_info.m_hash);
+    PRINTF("Hash: %.*H\n", INT256_LENGTH, G_context.sign_tx.m_hash);
 
     // display transaction for review
     render_sign_tx(&strings.sign_tx);

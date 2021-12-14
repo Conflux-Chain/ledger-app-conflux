@@ -68,4 +68,3 @@ extern const internalStorage_t N_storage_real;
 
 extern strings_t strings;
 extern cx_sha3_t global_sha3;
-extern uint8_t appState;

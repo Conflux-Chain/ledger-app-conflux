@@ -108,8 +108,8 @@ int crypto_sign_message() {
     // derive private key according to BIP32 path
     crypto_derive_private_key(&private_key,
                               chain_code,
-                              G_context.bip32_path,
-                              G_context.bip32_path_len);
+                              G_context.sign_tx.bip32_path,
+                              G_context.sign_tx.bip32_path_len);
 
     BEGIN_TRY {
         TRY {
@@ -119,12 +119,12 @@ int crypto_sign_message() {
             sig_len = cx_ecdsa_sign(&private_key,
                                     CX_RND_RFC6979 | CX_LAST,
                                     CX_SHA256,
-                                    G_context.tx_info.m_hash,
-                                    sizeof(G_context.tx_info.m_hash),
-                                    G_context.tx_info.signature,
-                                    sizeof(G_context.tx_info.signature),
+                                    G_context.sign_tx.m_hash,
+                                    sizeof(G_context.sign_tx.m_hash),
+                                    G_context.sign_tx.signature,
+                                    sizeof(G_context.sign_tx.signature),
                                     &info);
-            PRINTF("Signature: %.*H\n", sig_len, G_context.tx_info.signature);
+            PRINTF("Signature: %.*H\n", sig_len, G_context.sign_tx.signature);
         }
         CATCH_OTHER(e) {
             THROW(e);
@@ -139,8 +139,8 @@ int crypto_sign_message() {
         return -1;
     }
 
-    G_context.tx_info.signature_len = sig_len;
-    G_context.tx_info.v = (uint8_t) (info & CX_ECCINFO_PARITY_ODD);
+    G_context.sign_tx.signature_len = sig_len;
+    G_context.sign_tx.v = (uint8_t) (info & CX_ECCINFO_PARITY_ODD);
 
     return 0;
 }

@@ -31,27 +31,31 @@
 #include "helper/send_response.h"
 
 void handler_get_public_key(buffer_t *cdata, bool display, bool get_chaincode) {
-    explicit_bzero(&G_context, sizeof(G_context));
-    G_context.req_type = CONFIRM_ADDRESS;
-    G_context.state = STATE_NONE;
-    G_context.pk_info.get_chaincode = get_chaincode;
+    if (G_context.app_state != APP_STATE_IDLE) {
+        reset_app_context();
+    }
+
+    G_context.app_state = APP_STATE_GETTING_PUBKEY;
+
+    get_pubkey_ctx_t *ctx = &G_context.get_pubkey;
+    ctx->chaincode_requested = get_chaincode;
 
     // parse BIP32 path
-    if (!buffer_read_u8(cdata, &G_context.bip32_path_len) ||
-        !buffer_read_bip32_path(cdata, G_context.bip32_path, (size_t) G_context.bip32_path_len)) {
+    if (!buffer_read_u8(cdata, &ctx->bip32_path_len) ||
+        !buffer_read_bip32_path(cdata, ctx->bip32_path, (size_t) ctx->bip32_path_len)) {
         THROW(SW_WRONG_DATA_LENGTH);
     }
 
     // parse chain ID
-    if (display && !buffer_read_u16(cdata, &G_context.pk_info.chain_id, BE)) {
+    if (display && !buffer_read_u16(cdata, &ctx->chain_id, BE)) {
         THROW(SW_WRONG_DATA_LENGTH);
     }
 
     // derive public key and chain code
-    crypto_derive_public_key(G_context.bip32_path,
-                             G_context.bip32_path_len,
-                             G_context.pk_info.raw_public_key,
-                             G_context.pk_info.chain_code);
+    crypto_derive_public_key(ctx->bip32_path,
+                             ctx->bip32_path_len,
+                             ctx->raw_public_key,
+                             ctx->chain_code);
 
     // display and/or return results to caller
     if (display) {

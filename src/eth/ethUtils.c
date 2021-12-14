@@ -30,7 +30,7 @@
 #include "os.h"
 #include "cx.h"
 #include "ethUtils.h"
-#include "ethUstream.h"
+#include "rlp_parser.h"
 
 bool rlpCanDecode(uint8_t *buffer, uint32_t bufferLength, bool *valid) {
     if (*buffer <= 0x7f) {

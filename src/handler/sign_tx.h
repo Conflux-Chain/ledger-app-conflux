@@ -8,8 +8,8 @@
  * Handler for SIGN_TX command. If successfully parse BIP32 path
  * and transaction, sign transaction and send APDU response.
  *
- * @see G_context.bip32_path, G_context.tx_info.raw_transaction,
- * G_context.tx_info.signature and G_context.tx_info.v.
+ * @see G_context.sign_tx.bip32_path, G_context.sign_tx.raw_transaction,
+ * G_context.sign_tx.signature and G_context.sign_tx.v.
  *
  * @param[in,out] cdata
  *   Command data with BIP32 path and raw transaction serialized.

@@ -24,14 +24,13 @@
 #include "cx.h"
 
 #include "address.h"
-
-#include "transaction/types.h"
+#include "constants.h"
 
 bool address_from_pubkey(const uint8_t public_key[static 64], uint8_t *out, size_t out_len) {
     uint8_t address[32] = {0};
     cx_sha3_t keccak256;
 
-    if (out_len < ADDRESS_LEN) {
+    if (out_len < ADDRESS_LEN_BYTES) {
         return false;
     }
 
@@ -39,10 +38,10 @@ bool address_from_pubkey(const uint8_t public_key[static 64], uint8_t *out, size
     cx_hash((cx_hash_t *) &keccak256, CX_LAST, public_key, 64, address, sizeof(address));
 
     // Conflux user addresses start with b0001
-    address[sizeof(address) - ADDRESS_LEN] &= '\x0f';
-    address[sizeof(address) - ADDRESS_LEN] |= '\x10';
+    address[sizeof(address) - ADDRESS_LEN_BYTES] &= '\x0f';
+    address[sizeof(address) - ADDRESS_LEN_BYTES] |= '\x10';
 
-    memmove(out, address + sizeof(address) - ADDRESS_LEN, ADDRESS_LEN);
+    memmove(out, address + sizeof(address) - ADDRESS_LEN_BYTES, ADDRESS_LEN_BYTES);
 
     return true;
 }

@@ -32,12 +32,12 @@ int helper_send_response_pubkey() {
     resp[offset++] = PUBKEY_LEN + 1;
     resp[offset++] = 0x04;
 
-    memmove(resp + offset, G_context.pk_info.raw_public_key, PUBKEY_LEN);
+    memmove(resp + offset, G_context.get_pubkey.raw_public_key, PUBKEY_LEN);
     offset += PUBKEY_LEN;
 
-    if (G_context.pk_info.get_chaincode) {
+    if (G_context.get_pubkey.chaincode_requested) {
         resp[offset++] = CHAINCODE_LEN;
-        memmove(resp + offset, G_context.pk_info.chain_code, CHAINCODE_LEN);
+        memmove(resp + offset, G_context.get_pubkey.chain_code, CHAINCODE_LEN);
         offset += CHAINCODE_LEN;
     }
 
@@ -49,7 +49,7 @@ void helper_send_response_sig(const uint8_t *signature) {
     size_t offset = 0;
 
     // v
-    resp[offset++] = G_context.tx_info.v;
+    resp[offset++] = G_context.sign_tx.v;
 
     // r
     uint8_t xoffset = 4;  // point to r value

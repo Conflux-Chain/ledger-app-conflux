@@ -36,7 +36,6 @@ bolos_ux_params_t G_ux_params;
 global_ctx_t G_context;
 const internalStorage_t N_storage_real;
 cx_sha3_t global_sha3;
-uint8_t appState;
 strings_t strings;
 
 void init_storage() {
@@ -55,7 +54,7 @@ void init_storage() {
 }
 
 void reset_app_context() {
-    appState = APP_STATE_IDLE;
+    G_context.app_state = APP_STATE_IDLE;
     memset((uint8_t *) &G_context, 0, sizeof(G_context));
     ui_menu_main();
 }
