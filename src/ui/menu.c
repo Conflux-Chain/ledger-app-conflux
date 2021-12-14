@@ -61,20 +61,22 @@ void ui_sign_tx() {
         THROW(SW_BAD_STATE);
     }
 
+    sign_tx_ctx_t *ctx = &G_context.sign_tx;
+
     // no blind signing
-    if (G_context.sign_tx.transaction.data_present && !N_storage.settings.allow_blind_sign) {
+    if (ctx->transaction.data_present && !N_storage.settings.allow_blind_sign) {
         return ux_flow_init(0, ux_flow_error_blind_sign, NULL);
     }
 
     // store the hash
-    cx_hash((cx_hash_t*) &global_sha3,
+    cx_hash((cx_hash_t*) &ctx->sha3,
             CX_LAST,
-            G_context.sign_tx.m_hash,
+            ctx->m_hash,
             0,
-            G_context.sign_tx.m_hash,
+            ctx->m_hash,
             32);
 
-    PRINTF("Hash: %.*H\n", INT256_LENGTH, G_context.sign_tx.m_hash);
+    PRINTF("Hash: %.*H\n", INT256_LENGTH, ctx->m_hash);
 
     // display transaction for review
     render_sign_tx(&strings.sign_tx);

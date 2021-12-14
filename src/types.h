@@ -8,6 +8,32 @@
 #include "eth/rlp_parser.h"
 
 /**
+ * Global application settings.
+ */
+typedef struct app_settings_t {
+    uint8_t allow_blind_sign;
+    uint8_t allow_detailed_display;
+} app_settings_t;
+
+enum blind_sign_t {
+    BlindSignDisabled = 0,
+    BlindSignEnabled = 1,
+};
+
+enum display_style_t {
+    DisplayStyleSimple = 0,
+    DisplayStyleDetailed = 1,
+};
+
+/**
+ * Persistent storage.
+ */
+typedef struct internal_storage_t {
+    app_settings_t settings;
+    uint8_t initialized;
+} internal_storage_t;
+
+/**
  * Enumeration for the status of IO.
  */
 typedef enum {
@@ -64,6 +90,7 @@ typedef struct {
     uint8_t signature[MAX_DER_SIG_LEN];   /// transaction signature encoded in DER
     uint8_t signature_len;                /// length of transaction signature
     uint8_t v;                            /// parity of y-coordinate of R in ECDSA signature
+    cx_sha3_t sha3;
     parser_context_t parser_context;
     transaction_t transaction;
 } sign_tx_ctx_t;

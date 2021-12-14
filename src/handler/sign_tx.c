@@ -58,7 +58,7 @@ void handler_sign_tx(buffer_t* cdata, bool first) {
         }
 
         // init parser
-        init_parser(&ctx->parser_context, &global_sha3, &ctx->transaction);
+        init_parser(&ctx->parser_context, &ctx->sha3, &ctx->transaction);
     }
 
     if (!first && G_context.app_state != APP_STATE_SIGNING_TX) {
