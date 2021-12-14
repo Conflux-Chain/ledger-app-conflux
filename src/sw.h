@@ -5,6 +5,10 @@
  */
 #define SW_OK 0x9000
 /**
+ * Status word for invalid data.
+ */
+#define SW_INVALID_DATA 0x6A80
+/**
  * Status word for denied by user.
  */
 #define SW_DENY 0x6985
@@ -56,6 +60,10 @@
  * Status word for bad state.
  */
 #define SW_BAD_STATE 0xB007
+/**
+ * Status word for overly large chain ID.
+ */
+#define SW_CHAIN_ID_TOO_LARGE 0xB008
 /**
  * Status word for signature fail.
  */

@@ -1,14 +1,37 @@
 #pragma once
 
-#define NETWORK_STRING_MAX_SIZE 16
-
-#include <stddef.h>  // size_t
-#include <stdint.h>  // uint*_t
+#define NETWORK_STRING_MAX_SIZE    16
+#define FUNCTION_SELECTOR_MAX_SIZE 14
 
 #include "constants.h"
-#include "transaction/types.h"
 #include "common/bip32.h"
-#include "ethUstream.h"
+#include "eth/rlp_parser.h"
+
+/**
+ * Global application settings.
+ */
+typedef struct app_settings_t {
+    uint8_t allow_blind_sign;
+    uint8_t allow_detailed_display;
+} app_settings_t;
+
+enum blind_sign_t {
+    BlindSignDisabled = 0,
+    BlindSignEnabled = 1,
+};
+
+enum display_style_t {
+    DisplayStyleSimple = 0,
+    DisplayStyleDetailed = 1,
+};
+
+/**
+ * Persistent storage.
+ */
+typedef struct internal_storage_t {
+    app_settings_t settings;
+    uint8_t initialized;
+} internal_storage_t;
 
 /**
  * Enumeration for the status of IO.
@@ -25,8 +48,6 @@ typedef enum {
 typedef enum {
     GET_PUBLIC_KEY = 0x02,  /// public key of corresponding BIP32 path
     SIGN_TX = 0x03,         /// sign transaction with BIP32 path
-    GET_VERSION = 0x04,     /// version of the application
-    GET_APP_NAME = 0x05     /// name of the application
 } command_e;
 
 /**
@@ -41,77 +62,72 @@ typedef struct {
     uint8_t *data;  /// Command data
 } command_t;
 
-/**
- * Enumeration with parsing state.
- */
 typedef enum {
-    STATE_NONE,     /// No state
-    STATE_PARSED,   /// Transaction data parsed
-    STATE_APPROVED  /// Transaction data approved
-} state_e;
-
-/**
- * Enumeration with user request type.
- */
-typedef enum {
-    CONFIRM_ADDRESS,     /// confirm address derived from public key
-    CONFIRM_TRANSACTION  /// confirm transaction information
-} request_type_e;
+    APP_STATE_IDLE,
+    APP_STATE_GETTING_PUBKEY,
+    APP_STATE_SIGNING_TX,
+} app_state_t;
 
 /**
  * Structure for public key context information.
  */
 typedef struct {
+    uint32_t bip32_path[MAX_BIP32_PATH];  /// BIP32 path
+    uint8_t bip32_path_len;               /// length of BIP32 path
     uint16_t chain_id;
-    bool get_chaincode;
+    bool chaincode_requested;
     uint8_t raw_public_key[64];  /// x-coordinate (32), y-coodinate (32)
     uint8_t chain_code[32];      /// for public key derivation
-} pubkey_ctx_t;
+} get_pubkey_ctx_t;
 
 /**
- * Structure for transaction information context.
+ * Structure for transaction context information.
  */
 typedef struct {
-    uint8_t raw_tx[MAX_TRANSACTION_LEN];  /// raw transaction serialized
-    size_t raw_tx_len;                    /// length of raw transaction
-    transaction_t transaction;            /// structured transaction
+    uint32_t bip32_path[MAX_BIP32_PATH];  /// BIP32 path
+    uint8_t bip32_path_len;               /// length of BIP32 path
     uint8_t m_hash[32];                   /// message hash digest
     uint8_t signature[MAX_DER_SIG_LEN];   /// transaction signature encoded in DER
     uint8_t signature_len;                /// length of transaction signature
     uint8_t v;                            /// parity of y-coordinate of R in ECDSA signature
-} transaction_ctx_t;
+    cx_sha3_t sha3;
+    parser_context_t parser_context;
+    transaction_t transaction;
+} sign_tx_ctx_t;
 
 /**
  * Structure for global context.
  */
 typedef struct {
-    state_e state;  /// state of the context
+    app_state_t app_state;
     union {
-        pubkey_ctx_t pk_info;       /// public key context
-        transaction_ctx_t tx_info;  /// transaction context
+        get_pubkey_ctx_t get_pubkey;
+        sign_tx_ctx_t sign_tx;
     };
-    request_type_e req_type;              /// user request
-    uint32_t bip32_path[MAX_BIP32_PATH];  /// BIP32 path
-    uint8_t bip32_path_len;               /// lenght of BIP32 path
-
-    txContext_t tx_context;
-    txContent_t tx_content;
 } global_ctx_t;
 
-typedef enum {
-    APP_STATE_IDLE,
-    APP_STATE_SIGNING_TX,
-    APP_STATE_SIGNING_MESSAGE
-} app_state_t;
+typedef struct settings_strings_t {
+    char blind_signing[15];
+    char display_style[15];
+} settings_strings_t;
 
-typedef struct txStringProperties_t {
-    char fullAddress[52];
-    char fullAmount[79];  // 2^256 is 78 digits long
-    char maxFee[50];
+typedef struct get_pubkey_strings_t {
+    char bip32_path[60];
+    char address[CONFLUX_ADDRESS_MAX_LEN];
+} get_pubkey_strings_t;
+
+typedef struct sign_tx_strings_t {
+    char sender_address[CONFLUX_ADDRESS_MAX_LEN];
+    char receiver_address[CONFLUX_ADDRESS_MAX_LEN];
+    char full_amount[79];  // 2^256 is 78 digits long
+    char max_fee[50];
     char nonce[8];  // 10M tx per account ought to be enough for everybody
     char network_name[NETWORK_STRING_MAX_SIZE];
-} txStringProperties_t;
+    char data[FUNCTION_SELECTOR_MAX_SIZE];
+} sign_tx_strings_t;
 
 typedef union {
-    txStringProperties_t common;
+    settings_strings_t settings;
+    get_pubkey_strings_t get_pubkey;
+    sign_tx_strings_t sign_tx;
 } strings_t;

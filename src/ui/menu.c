@@ -17,141 +17,74 @@
 
 #include "os.h"
 #include "ux.h"
+
+#include "actions.h"
+#include "flows.h"
+#include "globals.h"
 #include "glyphs.h"
-
-#include "../globals.h"
 #include "menu.h"
-
-
-UX_STEP_NOCB(ux_menu_ready_step, pnn, {&C_boilerplate_logo, "Conflux", "is ready"});
-UX_STEP_VALID(ux_menu_settings_step, pb, ui_menu_settings(), {&C_icon_coggle, "Settings"});
-UX_STEP_NOCB(ux_menu_version_step, bn, {"Version", APPVERSION});
-UX_STEP_CB(ux_menu_about_step, pb, ui_menu_about(), {&C_icon_certificate, "About"});
-UX_STEP_VALID(ux_menu_exit_step, pb, os_sched_exit(-1), {&C_icon_dashboard_x, "Quit"});
-
-// FLOW for the main menu:
-// #1 screen: ready
-// #2 screen: settings submenu
-// #3 screen: version of the app
-// #4 screen: about submenu
-// #5 screen: quit
-UX_FLOW(ux_menu_main_flow,
-        &ux_menu_ready_step,
-        &ux_menu_settings_step,
-        &ux_menu_version_step,
-        &ux_menu_about_step,
-        &ux_menu_exit_step,
-        FLOW_LOOP);
+#include "render.h"
+#include "steps.h"
+#include "sw.h"
 
 void ui_menu_main() {
     if (G_ux.stack_count == 0) {
         ux_stack_push();
     }
 
-    ux_flow_init(0, ux_menu_main_flow, NULL);
+    return ux_flow_init(0, ux_flow_main_menu, NULL);
 }
-
-UX_STEP_NOCB(ux_menu_info_step, bn, {"Conflux App", "(c) 2021 Conflux"});
-UX_STEP_CB(ux_menu_back_step, pb, ui_menu_main(), {&C_icon_back, "Back"});
-
-// FLOW for the about submenu:
-// #1 screen: app info
-// #2 screen: back button to main menu
-UX_FLOW(ux_menu_about_flow, &ux_menu_info_step, &ux_menu_back_step, FLOW_LOOP);
 
 void ui_menu_about() {
-    ux_flow_init(0, ux_menu_about_flow, NULL);
+    return ux_flow_init(0, ux_flow_about, NULL);
 }
 
-
-// ------------------------------------------ //
-// ---------------- SETTINGS ---------------- //
-// ------------------------------------------ //
-
-const char* const settings_submenu_getter_values[] = {
-  "Allow blind sign",
-  "Detailed display",
-  "Back",
-};
-
-const char* settings_submenu_getter(unsigned int idx) {
-  if (idx < ARRAYLEN(settings_submenu_getter_values)) {
-    return settings_submenu_getter_values[idx];
-  }
-  return NULL;
+void ui_menu_settings(const ux_flow_step_t* const start_step) {
+    render_settings(&strings.settings);
+    return ux_flow_init(0, ux_flow_settings, start_step);
 }
 
-const char* const no_yes_data_getter_values[] = {
-  "No",
-  "Yes",
-  "Back"
-};
+void ui_get_pubkey() {
+    if (G_context.app_state != APP_STATE_GETTING_PUBKEY) {
+        G_context.app_state = APP_STATE_IDLE;
+        THROW(SW_BAD_STATE);
+    }
 
-static const char* allow_blind_sign_data_getter(unsigned int idx) {
-  if (idx < ARRAYLEN(no_yes_data_getter_values)) {
-    return no_yes_data_getter_values[idx];
-  }
-  return NULL;
+    render_get_pubkey(&strings.get_pubkey);
+    g_validate_callback = &ui_action_validate_pubkey;
+    return ux_flow_init(0, ux_flow_get_pubkey, NULL);
 }
 
-static void allow_blind_sign_data_change(enum BlindSign blind_sign) {
-    uint8_t value = (uint8_t) blind_sign;
-    nvm_write((void *)&N_storage.settings.allow_blind_sign, &value, sizeof(value));
-    ui_menu_main();
-}
+void ui_sign_tx() {
+    if (G_context.app_state != APP_STATE_SIGNING_TX) {
+        G_context.app_state = APP_STATE_IDLE;
+        THROW(SW_BAD_STATE);
+    }
 
-void allow_blind_sign_data_selector(unsigned int idx) {
-  switch(idx) {
-    case 0:
-      allow_blind_sign_data_change(BlindSignDisabled);
-      break;
-    case 1:
-      allow_blind_sign_data_change(BlindSignEnabled);
-      break;
-    default:
-      ui_menu_main();
-  }
-}
+    sign_tx_ctx_t *ctx = &G_context.sign_tx;
 
-static const char* allow_detailed_display_data_getter(unsigned int idx) {
-  if (idx < ARRAYLEN(no_yes_data_getter_values)) {
-    return no_yes_data_getter_values[idx];
-  }
-  return NULL;
-}
+    // no blind signing
+    if (ctx->transaction.data_present && !N_storage.settings.allow_blind_sign) {
+        return ux_flow_init(0, ux_flow_error_blind_sign, NULL);
+    }
 
-static void allow_detailed_display_data_change(enum BlindSign blind_sign) {
-    uint8_t value = (uint8_t) blind_sign;
-    nvm_write((void *)&N_storage.settings.allow_detailed_display, &value, sizeof(value));
-    ui_menu_main();
-}
+    // store the hash
+    cx_hash((cx_hash_t*) &ctx->sha3,
+            CX_LAST,
+            ctx->m_hash,
+            0,
+            ctx->m_hash,
+            32);
 
-void allow_detailed_display_data_selector(unsigned int idx) {
-  switch(idx) {
-    case 0:
-      allow_detailed_display_data_change(BlindSignDisabled);
-      break;
-    case 1:
-      allow_detailed_display_data_change(BlindSignEnabled);
-      break;
-    default:
-      ui_menu_main();
-  }
-}
+    PRINTF("Hash: %.*H\n", INT256_LENGTH, ctx->m_hash);
 
-void settings_submenu_selector(unsigned int idx) {
-  switch(idx) {
-    case 0:
-      ux_menulist_init_select(0, allow_blind_sign_data_getter, allow_blind_sign_data_selector, N_storage.settings.allow_blind_sign);
-      break;
-    case 1:
-      ux_menulist_init_select(0, allow_detailed_display_data_getter, allow_detailed_display_data_selector, N_storage.settings.allow_detailed_display);
-      break;
-    default:
-      ui_menu_main();
-  }
-}
+    // display transaction for review
+    render_sign_tx(&strings.sign_tx);
+    g_validate_callback = &ui_action_validate_transaction;
 
-void ui_menu_settings() {
-    ux_menulist_init(0, settings_submenu_getter, settings_submenu_selector);
+    if (N_storage.settings.allow_detailed_display) {
+        return ux_flow_init(0, ux_flow_sign_tx_detailed, NULL);
+    } else {
+        return ux_flow_init(0, ux_flow_sign_tx_simple, NULL);
+    }
 }

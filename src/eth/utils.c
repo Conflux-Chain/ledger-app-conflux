@@ -18,7 +18,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "ethUstream.h"
+#include "rlp_parser.h"
 #include "ethUtils.h"
 #include "uint256.h"
 #include "./utils.h"

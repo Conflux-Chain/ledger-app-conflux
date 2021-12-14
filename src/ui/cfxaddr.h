@@ -18,6 +18,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
 #define CFXADDR_MAINNET_ID 1029

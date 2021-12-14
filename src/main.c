@@ -34,28 +34,26 @@ io_state_e G_io_state;
 ux_state_t G_ux;
 bolos_ux_params_t G_ux_params;
 global_ctx_t G_context;
-const internalStorage_t N_storage_real;
-cx_sha3_t global_sha3;
-uint8_t appState;
+const internal_storage_t N_storage_real;
 strings_t strings;
 
 void init_storage() {
     if (N_storage.initialized != 0x01) {
-        internalStorage_t storage;
+        internal_storage_t storage;
         storage.settings.allow_blind_sign = BlindSignDisabled;
-        storage.settings.allow_detailed_display = DetailedDisplayDisabled;
+        storage.settings.allow_detailed_display = DisplayStyleSimple;
         storage.initialized = 0x01;
 
         nvm_write(
-            (internalStorage_t*)&N_storage,
+            (internal_storage_t*)&N_storage,
             (void*)&storage,
-            sizeof(internalStorage_t)
+            sizeof(internal_storage_t)
         );
     }
 }
 
 void reset_app_context() {
-    appState = APP_STATE_IDLE;
+    G_context.app_state = APP_STATE_IDLE;
     memset((uint8_t *) &G_context, 0, sizeof(G_context));
     ui_menu_main();
 }
@@ -104,9 +102,7 @@ void app_main() {
                        cmd.data);
 
                 // Dispatch structured APDU command to handler
-                if (apdu_dispatcher(&cmd) < 0) {
-                    return;
-                }
+                apdu_dispatcher(&cmd);
             }
             CATCH(EXCEPTION_IO_RESET) {
                 THROW(EXCEPTION_IO_RESET);

@@ -41,31 +41,12 @@ extern io_state_e G_io_state;
 extern global_ctx_t G_context;
 
 /**
- * Global application settings
+ * Persistent storage.
  */
-typedef struct AppSettings {
-    uint8_t allow_blind_sign;
-    uint8_t allow_detailed_display;
-} AppSettings;
+extern const internal_storage_t N_storage_real;
+#define N_storage (*( volatile internal_storage_t *)PIC(&N_storage_real))
 
-enum BlindSign {
-    BlindSignDisabled = 0,
-    BlindSignEnabled = 1,
-};
-
-enum DetailedDisplay {
-    DetailedDisplayDisabled = 0,
-    DetailedDisplayEnabled = 1,
-};
-
-typedef struct internalStorage_t {
-    AppSettings settings;
-    uint8_t initialized;
-} internalStorage_t;
-
-extern const internalStorage_t N_storage_real;
-#define N_storage (*( volatile internalStorage_t *)PIC(&N_storage_real))
-
+/**
+ * Strings rendered for display.
+ */
 extern strings_t strings;
-extern cx_sha3_t global_sha3;
-extern uint8_t appState;

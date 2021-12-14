@@ -15,7 +15,6 @@
  *  limitations under the License.
  *****************************************************************************/
 
-#include <stdint.h>   // uint*_t
 #include <stdbool.h>  // bool
 #include <stddef.h>   // size_t
 #include <string.h>   // memset, explicit_bzero
@@ -24,56 +23,44 @@
 #include "cx.h"
 
 #include "get_public_key.h"
-#include "../globals.h"
-#include "../types.h"
-#include "../io.h"
-#include "../sw.h"
-#include "../crypto.h"
-#include "../common/buffer.h"
-#include "../ui/display.h"
-#include "../helper/send_response.h"
+#include "globals.h"
+#include "sw.h"
+#include "crypto.h"
+#include "common/buffer.h"
+#include "ui/menu.h"
+#include "helper/send_response.h"
 
-int handler_get_public_key(buffer_t *cdata, bool display, bool get_chaincode) {
-    explicit_bzero(&G_context, sizeof(G_context));
-    G_context.req_type = CONFIRM_ADDRESS;
-    G_context.state = STATE_NONE;
-
-    G_context.pk_info.get_chaincode = get_chaincode;
-
-    cx_ecfp_private_key_t private_key = {0};
-    cx_ecfp_public_key_t public_key = {0};
-
-    io_seproxyhal_io_heartbeat();
-
-    if (!buffer_read_u8(cdata, &G_context.bip32_path_len) ||
-        !buffer_read_bip32_path(cdata, G_context.bip32_path, (size_t) G_context.bip32_path_len)) {
-        return io_send_sw(SW_WRONG_DATA_LENGTH);
+void handler_get_public_key(buffer_t *cdata, bool display, bool get_chaincode) {
+    if (G_context.app_state != APP_STATE_IDLE) {
+        reset_app_context();
     }
 
-    if (display && !buffer_read_u16(cdata, &G_context.pk_info.chain_id, BE)) {
-        return io_send_sw(SW_WRONG_DATA_LENGTH);
+    G_context.app_state = APP_STATE_GETTING_PUBKEY;
+
+    get_pubkey_ctx_t *ctx = &G_context.get_pubkey;
+    ctx->chaincode_requested = get_chaincode;
+
+    // parse BIP32 path
+    if (!buffer_read_u8(cdata, &ctx->bip32_path_len) ||
+        !buffer_read_bip32_path(cdata, ctx->bip32_path, (size_t) ctx->bip32_path_len)) {
+        THROW(SW_WRONG_DATA_LENGTH);
     }
 
-    // derive private key according to BIP32 path
-    crypto_derive_private_key(&private_key,
-                              G_context.pk_info.chain_code,
-                              G_context.bip32_path,
-                              G_context.bip32_path_len);
-    io_seproxyhal_io_heartbeat();
+    // parse chain ID
+    if (display && !buffer_read_u16(cdata, &ctx->chain_id, BE)) {
+        THROW(SW_WRONG_DATA_LENGTH);
+    }
 
-    // generate corresponding public key
-    crypto_init_public_key(&private_key, &public_key, G_context.pk_info.raw_public_key);
+    // derive public key and chain code
+    crypto_derive_public_key(ctx->bip32_path,
+                             ctx->bip32_path_len,
+                             ctx->raw_public_key,
+                             ctx->chain_code);
 
-    io_seproxyhal_io_heartbeat();
-
-    // reset private key
-    explicit_bzero(&private_key, sizeof(private_key));
-
+    // display and/or return results to caller
     if (display) {
-        return ui_display_address();
+        return ui_get_pubkey();
     }
 
-    io_seproxyhal_io_heartbeat();
-
-    return helper_send_response_pubkey();
+    helper_send_response_pubkey();
 }

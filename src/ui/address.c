@@ -16,31 +16,32 @@
  *****************************************************************************/
 
 #include <stdint.h>   // uint*_t
+#include <stddef.h>   // size_t
 #include <stdbool.h>  // bool
 #include <string.h>   // memmove
 
-#include "types.h"
+#include "os.h"
+#include "cx.h"
 
-bool transaction_utils_check_encoding(const uint8_t *memo, uint64_t memo_len) {
-    for (uint64_t i = 0; i < memo_len; i++) {
-        if (memo[i] > 0x7F) {
-            return false;
-        }
-    }
+#include "address.h"
+#include "constants.h"
 
-    return true;
-}
+bool address_from_pubkey(const uint8_t public_key[static 64], uint8_t *out, size_t out_len) {
+    uint8_t address[32] = {0};
+    cx_sha3_t keccak256;
 
-bool transaction_utils_format_memo(const uint8_t *memo,
-                                   uint64_t memo_len,
-                                   char *dst,
-                                   uint64_t dst_len) {
-    if (memo_len > MAX_MEMO_LEN || dst_len < memo_len + 1) {
+    if (out_len < ADDRESS_LEN_BYTES) {
         return false;
     }
 
-    memmove(dst, memo, memo_len);
-    dst[memo_len] = '\0';
+    cx_keccak_init(&keccak256, 256);
+    cx_hash((cx_hash_t *) &keccak256, CX_LAST, public_key, 64, address, sizeof(address));
+
+    // Conflux user addresses start with b0001
+    address[sizeof(address) - ADDRESS_LEN_BYTES] &= '\x0f';
+    address[sizeof(address) - ADDRESS_LEN_BYTES] |= '\x10';
+
+    memmove(out, address + sizeof(address) - ADDRESS_LEN_BYTES, ADDRESS_LEN_BYTES);
 
     return true;
 }

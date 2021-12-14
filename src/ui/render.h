@@ -1,6 +1,6 @@
 /*****************************************************************************
- *   Ledger App Boilerplate.
- *   (c) 2020 Ledger SAS.
+ *   app-conflux: Conlfux Ledger App.
+ *   (c) 2021 Conflux Foundation.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,20 +15,10 @@
  *  limitations under the License.
  *****************************************************************************/
 
-#include <stdint.h>  // uint*_t
+#pragma once
 
-#include "get_app_name.h"
-#include "../constants.h"
-#include "../globals.h"
-#include "../io.h"
-#include "../sw.h"
-#include "../types.h"
-#include "common/buffer.h"
+#include "types.h"
 
-int handler_get_app_name() {
-    _Static_assert(APPNAME_LEN < MAX_APPNAME_LEN, "APPNAME must be at most 64 characters!");
-
-    buffer_t rdata = {.ptr = (uint8_t *) PIC(APPNAME), .size = APPNAME_LEN, .offset = 0};
-
-    return io_send_response(&rdata, SW_OK);
-}
+void render_settings(settings_strings_t* strings);
+void render_get_pubkey(get_pubkey_strings_t* strings);
+void render_sign_tx(sign_tx_strings_t* strings);
