@@ -164,7 +164,7 @@ UX_STEP_CB(ux_step_settings_display_style,
 UX_STEP_NOCB(ux_step_menu_ready,
              pnn,
              {
-                 &C_boilerplate_logo,
+                 &C_icon_conflux,
                  "Conflux",
                  "is ready",
              });
