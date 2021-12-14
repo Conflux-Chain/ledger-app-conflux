@@ -62,4 +62,5 @@ int crypto_sign_message(void);
 
 int crypto_derive_public_key(const uint32_t *bip32_path,
                              uint8_t bip32_path_len,
-                             uint8_t raw_public_key[static 64]);
+                             uint8_t raw_public_key[static 64],
+                             uint8_t chain_code[static 32]);

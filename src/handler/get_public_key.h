@@ -1,11 +1,8 @@
 #pragma once
 
-#include <stddef.h>   // size_t
 #include <stdbool.h>  // bool
-#include <stdint.h>   // uint*_t
 
-#include "../types.h"
-#include "../common/buffer.h"
+#include "common/buffer.h"
 
 /**
  * Handler for GET_PUBLIC_KEY command. If successfully parse BIP32 path,
@@ -18,8 +15,5 @@
  *   Command data with BIP32 path.
  * @param[in]     display
  *   Whether to display address on screen or not.
- *
- * @return zero or positive integer if success, negative integer otherwise.
- *
  */
-int handler_get_public_key(buffer_t *cdata, bool display, bool get_chaincode);
+void handler_get_public_key(buffer_t *cdata, bool display, bool get_chaincode);

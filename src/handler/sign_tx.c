@@ -15,43 +15,32 @@
  *  limitations under the License.
  *****************************************************************************/
 
-#include <stdint.h>   // uint*_t
-#include <stdbool.h>  // bool
-#include <stddef.h>   // size_t
-#include <string.h>   // memset, explicit_bzero
-
 #include "os.h"
 #include "cx.h"
 
 #include "sign_tx.h"
-#include "../sw.h"
-#include "../globals.h"
-#include "../crypto.h"
-#include "../ui/menu.h"
-#include "../common/buffer.h"
-#include "../transaction/types.h"
-#include "../transaction/deserialize.h"
-#include "../types.h"
-#include "apdu_constants.h"
-#include "eth/utils.h"
+#include "sw.h"
+#include "globals.h"
+#include "crypto.h"
+#include "ui/menu.h"
+#include "common/buffer.h"
 
-void debug_print_tx(txContent_t* tx) {
-    PRINTF("Nonce %.*H\n", tx->nonce.length, tx->nonce.value);
-    PRINTF("Gas price %.*H\n", tx->gasprice.length, tx->gasprice.value);
-    PRINTF("Gas limit %.*H\n", tx->gaslimit.length, tx->gaslimit.value);
-    PRINTF("Destination: %.*H\n", ADDRESS_LEN, tx->destination);
-    PRINTF("Value %.*H\n", tx->value.length, tx->value.value);
-    PRINTF("Storage limit %.*H\n", tx->storagelimit.length, tx->storagelimit.value);
-    PRINTF("Epoch height %.*H\n", tx->epochheight.length, tx->epochheight.value);
-    PRINTF("Chain ID %.*H\n", tx->chainid.length, tx->chainid.value);
-    // TODO: data
-}
+#define DEBUG_PRINT_TX(tx)                                                             \
+    PRINTF("Nonce %.*H\n", (tx).nonce.length, (tx).nonce.value);                       \
+    PRINTF("Gas price %.*H\n", (tx).gasprice.length, (tx).gasprice.value);             \
+    PRINTF("Gas limit %.*H\n", (tx).gaslimit.length, (tx).gaslimit.value);             \
+    PRINTF("Destination: %.*H\n", ADDRESS_LEN, (tx).destination);                      \
+    PRINTF("Value %.*H\n", (tx).value.length, (tx).value.value);                       \
+    PRINTF("Storage limit %.*H\n", (tx).storagelimit.length, (tx).storagelimit.value); \
+    PRINTF("Epoch height %.*H\n", (tx).epochheight.length, (tx).epochheight.value);    \
+    PRINTF("Chain ID %.*H\n", (tx).chainid.length, (tx).chainid.value);                \
+    PRINTF("Data prefix %.*H\n", SELECTOR_LENGTH, (tx).selector);
 
-int handler_sign_tx(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t dataLength) {
-    if (p1 == P1_FIRST) {
-        if (dataLength < 1) {
+void handler_sign_tx(buffer_t* cdata, bool first) {
+    if (first) {
+        if (cdata->size < 1) {
             PRINTF("Invalid data\n");
-            THROW(0x6a80);
+            THROW(SW_INVALID_DATA);
         }
 
         if (appState != APP_STATE_IDLE) {
@@ -61,70 +50,45 @@ int handler_sign_tx(uint8_t p1, uint8_t p2, uint8_t *workBuffer, uint16_t dataLe
         appState = APP_STATE_SIGNING_TX;
 
         // parse BIP32 path
-        G_context.bip32_path_len = workBuffer[0];
-
-        if ((G_context.bip32_path_len < 0x01) ||
-            (G_context.bip32_path_len > MAX_BIP32_PATH)) {
-            PRINTF("Invalid path\n");
-            THROW(0x6a80);
+        if (!buffer_read_u8(cdata, &G_context.bip32_path_len) ||
+            !buffer_read_bip32_path(cdata,
+                                    G_context.bip32_path,
+                                    (size_t) G_context.bip32_path_len)) {
+            THROW(SW_WRONG_DATA_LENGTH);
         }
 
-        workBuffer++;
-        dataLength--;
-
-        for (uint32_t ii = 0; ii < G_context.bip32_path_len; ii++) {
-            if (dataLength < 4) {
-                PRINTF("Invalid data\n");
-                THROW(0x6a80);
-            }
-
-            G_context.bip32_path[ii] = U4BE(workBuffer, 0);
-            workBuffer += 4;
-            dataLength -= 4;
-        }
-
-        initTx(&G_context.tx_context, &global_sha3, &G_context.tx_content, NULL);
+        // init parser
+        init_parser(&G_context.tx_context, &global_sha3, &G_context.tx_content);
     }
 
-    else if (p1 != P1_MORE) {
-        THROW(0x6B00);
-    }
-
-    if (p2 != 0) {
-        THROW(0x6B00);
-    }
-
-    if ((p1 == P1_MORE) && (appState != APP_STATE_SIGNING_TX)) {
+    if (!first && appState != APP_STATE_SIGNING_TX) {
         PRINTF("Signature not initialized\n");
-        THROW(0x6985);
+        THROW(SW_BAD_STATE);
     }
 
     if (G_context.tx_context.currentField == RLP_NONE) {
         PRINTF("Parser not initialized\n");
-        THROW(0x6985);
+        THROW(SW_BAD_STATE);
     }
 
     // parse RLP-encoded transaction
-    parserStatus_e txResult = processTx(&G_context.tx_context, workBuffer, dataLength);
-    debug_print_tx(&G_context.tx_content);
+    const uint8_t* buffer = cdata->ptr + cdata->offset;
+    size_t buffer_len = cdata->size - cdata->offset;
+    parserStatus_e status = process_tx_chunk(&G_context.tx_context, buffer, buffer_len);
 
-    switch (txResult) {
-        case USTREAM_SUSPENDED:
-            break;
+    switch (status) {
         case USTREAM_FINISHED:
-            break;
+            DEBUG_PRINT_TX(G_context.tx_content);
+            return ui_sign_tx();
+
         case USTREAM_PROCESSING:
-            THROW(0x9000);
+            THROW(SW_OK);
+
         case USTREAM_FAULT:
-            THROW(0x6A80);
+            THROW(SW_TX_PARSING_FAIL);
+
         default:
             PRINTF("Unexpected parser status\n");
-            THROW(0x6A80);
+            THROW(SW_INVALID_DATA);
     }
-
-    if (txResult == USTREAM_FINISHED) {
-        ui_sign_tx();
-    }
-
-    return 0;
 }

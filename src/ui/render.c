@@ -63,13 +63,17 @@ void render_sign_tx_sender(char *out, size_t out_len) {
         u64_from_BE(G_context.tx_content.chainid.value, G_context.tx_content.chainid.length);
 
     if (chain_id > 0xffff) {
-        // TODO: consider a better error code
-        THROW(0x6a80);
+        THROW(SW_CHAIN_ID_TOO_LARGE);
     }
 
     // derive public key
     uint8_t raw_public_key[64];
-    crypto_derive_public_key(G_context.bip32_path, G_context.bip32_path_len, raw_public_key);
+    uint8_t chain_code[32];
+
+    crypto_derive_public_key(G_context.bip32_path,
+                             G_context.bip32_path_len,
+                             raw_public_key,
+                             chain_code);
 
     // derive address
     uint8_t address[ADDRESS_LEN] = {0x00};
@@ -92,8 +96,7 @@ void render_sign_tx_receiver(char *out, size_t out_len) {
         u64_from_BE(G_context.tx_content.chainid.value, G_context.tx_content.chainid.length);
 
     if (chain_id > 0xffff) {
-        // TODO: consider a better error code
-        THROW(0x6a80);
+        THROW(SW_CHAIN_ID_TOO_LARGE);
     }
 
     cfxaddr_encode(G_context.tx_content.destination, out, out_len, chain_id);

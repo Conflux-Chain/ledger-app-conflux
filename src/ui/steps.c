@@ -19,6 +19,7 @@
 #include "menu.h"
 #include "steps.h"
 #include "actions.h"
+#include "sw.h"
 
 UX_STEP_NOCB(ux_step_get_pubkey_start,
              pn,
@@ -127,7 +128,7 @@ UX_STEP_CB(ux_step_sign_tx_reject,
 
 UX_STEP_CB(ux_step_error_blind_sign,
            pb,
-           THROW(0x6a80),
+           THROW(SW_DENY),
            {
                &C_icon_warning,
                "Blind sign disabled",

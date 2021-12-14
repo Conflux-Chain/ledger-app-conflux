@@ -1,11 +1,6 @@
 #pragma once
 
 /**
- * Instruction class of the Boilerplate application.
- */
-#define CLA 0xE0
-
-/**
  * Length of APPNAME variable in the Makefile.
  */
 #define APPNAME_LEN (sizeof(APPNAME) - 1)

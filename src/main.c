@@ -104,9 +104,7 @@ void app_main() {
                        cmd.data);
 
                 // Dispatch structured APDU command to handler
-                if (apdu_dispatcher(&cmd) < 0) {
-                    return;
-                }
+                apdu_dispatcher(&cmd);
             }
             CATCH(EXCEPTION_IO_RESET) {
                 THROW(EXCEPTION_IO_RESET);

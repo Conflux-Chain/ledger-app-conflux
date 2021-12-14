@@ -25,8 +25,6 @@ typedef enum {
 typedef enum {
     GET_PUBLIC_KEY = 0x02,  /// public key of corresponding BIP32 path
     SIGN_TX = 0x03,         /// sign transaction with BIP32 path
-    GET_VERSION = 0x04,     /// version of the application
-    GET_APP_NAME = 0x05     /// name of the application
 } command_e;
 
 /**
@@ -92,7 +90,7 @@ typedef struct {
     };
     request_type_e req_type;              /// user request
     uint32_t bip32_path[MAX_BIP32_PATH];  /// BIP32 path
-    uint8_t bip32_path_len;               /// lenght of BIP32 path
+    uint8_t bip32_path_len;               /// length of BIP32 path
 
     txContext_t tx_context;
     txContent_t tx_content;

@@ -1,6 +1,11 @@
 #pragma once
 
 /**
+ * Instruction class of the Conflux application.
+ */
+#define CLA 0xE0
+
+/**
  * Offset of instruction class.
  */
 #define OFFSET_CLA 0
@@ -30,5 +35,12 @@
  */
 #define OFFSET_CDATA 5
 
-#define P1_FIRST 0x00
-#define P1_MORE  0x80
+/**
+ * P1 value of first transaction data chunk.
+ */
+#define P1_SIGN_TX_FIRST 0x00
+
+/**
+ * P1 value of subsequent transaction data chunks.
+ */
+#define P1_SIGN_TX_MORE 0x80

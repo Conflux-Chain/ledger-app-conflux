@@ -71,10 +71,10 @@ int crypto_init_public_key(cx_ecfp_private_key_t *private_key,
 
 int crypto_derive_public_key(const uint32_t *bip32_path,
                              uint8_t bip32_path_len,
-                             uint8_t raw_public_key[static 64]) {
+                             uint8_t raw_public_key[static 64],
+                             uint8_t chain_code[static 32]) {
     cx_ecfp_private_key_t private_key = {0};
     cx_ecfp_public_key_t public_key = {0};
-    uint8_t chain_code[32] = {0};
 
     BEGIN_TRY {
         TRY {

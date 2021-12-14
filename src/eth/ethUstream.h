@@ -63,7 +63,6 @@ typedef enum rlpConfluxTxField_e {
 
 typedef enum parserStatus_e {
     USTREAM_PROCESSING,  // Parsing is in progress
-    USTREAM_SUSPENDED,   // Parsing has been suspended
     USTREAM_FINISHED,    // Parsing is done
     USTREAM_FAULT,       // An error was encountered while parsing
     USTREAM_CONTINUE     // Used internally to signify we can keep on parsing
@@ -102,18 +101,16 @@ typedef struct txContext_t {
     uint32_t dataLength;
     uint8_t rlpBuffer[5];
     uint32_t rlpBufferPos;
-    uint8_t *workBuffer;
+    const uint8_t *workBuffer;
     uint32_t commandLength;
     txContent_t *content;
-    void *extra;
 } txContext_t;
 
-void initTx(txContext_t *context,
+void init_parser(txContext_t *context,
             cx_sha3_t *sha3,
-            txContent_t *content,
-            void *extra);
-parserStatus_e processTx(txContext_t *context,
-                         uint8_t *buffer,
+            txContent_t *content);
+parserStatus_e process_tx_chunk(txContext_t *context,
+                         const uint8_t *buffer,
                          uint32_t length);
 parserStatus_e continueTx(txContext_t *context);
 void copyTxData(txContext_t *context, uint8_t *out, uint32_t length);

@@ -25,14 +25,12 @@
 #define MAX_INT256  32
 #define MAX_ADDRESS 20
 
-void initTx(txContext_t *context,
+void init_parser(txContext_t *context,
             cx_sha3_t *sha3,
-            txContent_t *content,
-            void *extra) {
+            txContent_t *content) {
     memset(context, 0, sizeof(txContext_t));
     context->sha3 = sha3;
     context->content = content;
-    context->extra = extra;
     context->currentField = RLP_NONE + 1;
     cx_keccak_init(context->sha3, 256);
 }
@@ -466,8 +464,8 @@ static parserStatus_e processTxInternal(txContext_t *context) {
     PRINTF("end of here\n");
 }
 
-parserStatus_e processTx(txContext_t *context,
-                         uint8_t *buffer,
+parserStatus_e process_tx_chunk(txContext_t *context,
+                         const uint8_t *buffer,
                          uint32_t length) {
     parserStatus_e result;
     BEGIN_TRY {
