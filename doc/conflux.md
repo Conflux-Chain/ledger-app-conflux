@@ -32,7 +32,7 @@ Flags: `b000000YX`
 | ------ | ------ | ------ | ------ | ------ |
 | `0xe0` | `0x01` | `0x00` | `0x00` | `0x00` |
 
-**Response**: `02000002 9000`, blind signing enabled, detailed display enabled, application version: `0.0.2`.
+**Response**: `03000002 9000`, blind signing enabled, detailed display enabled, application version: `0.0.2`.
 
 ## GET_PUBLIC_KEY
 
