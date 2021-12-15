@@ -144,7 +144,6 @@ static void feesToString(uint256_t *rawFee, char *displayBuffer, uint32_t displa
     uint8_t tickerOffset = 0;
     uint32_t i;
 
-    // TODO
     char buffer1[100];
     char buffer2[100];
 

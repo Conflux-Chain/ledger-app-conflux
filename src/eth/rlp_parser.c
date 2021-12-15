@@ -273,7 +273,6 @@ static void processData(parser_context_t *context) {
     }
 
     if (context->currentFieldPos < context->currentFieldLength) {
-        // TODO: check for corner cases
         context->content->data_present = true;
 
         uint32_t copySize =

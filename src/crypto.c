@@ -31,9 +31,6 @@ int crypto_derive_private_key(cx_ecfp_private_key_t *private_key,
 
     BEGIN_TRY {
         TRY {
-            // TODO
-            io_seproxyhal_io_heartbeat();
-
             // derive the seed with bip32_path
             os_perso_derive_node_bip32(CX_CURVE_256K1,
                                        bip32_path,
@@ -78,14 +75,9 @@ int crypto_derive_public_key(const uint32_t *bip32_path,
 
     BEGIN_TRY {
         TRY {
-            io_seproxyhal_io_heartbeat();
-
             // derive private key according to BIP32 path
             crypto_derive_private_key(&private_key, chain_code, bip32_path, bip32_path_len);
-
-            io_seproxyhal_io_heartbeat();
             crypto_init_public_key(&private_key, &public_key, raw_public_key);
-            io_seproxyhal_io_heartbeat();
         }
         CATCH_OTHER(e) {
             THROW(e);
@@ -113,9 +105,6 @@ int crypto_sign_message() {
 
     BEGIN_TRY {
         TRY {
-            // TODO
-            io_seproxyhal_io_heartbeat();
-
             sig_len = cx_ecdsa_sign(&private_key,
                                     CX_RND_RFC6979 | CX_LAST,
                                     CX_SHA256,
