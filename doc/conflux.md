@@ -1,3 +1,39 @@
+## GET_APP_INFO
+
+#### Request format
+
+| CLA    | INS    | P1     | P2     | Lc     |
+| ------ | ------ | ------ | ------ | ------ |
+| `0xe0` | `0x01` | `0x00` | `0x00` | `0x00` |
+
+##### Request payload
+
+None.
+
+#### Response format
+
+| Description   | Length |
+| ------------- | ------ |
+| Flags         | 1      |
+| Major version | 1      |
+| Minor version | 1      |
+| Patch version | 1      |
+
+Flags: `b000000YX`
+
+- `X`: blind signing enabled
+- `Y`: detailed display enabled
+
+#### Examples
+
+**Command**: `e001000000`
+
+| CLA    | INS    | P1     | P2     | Lc     |
+| ------ | ------ | ------ | ------ | ------ |
+| `0xe0` | `0x01` | `0x00` | `0x00` | `0x00` |
+
+**Response**: `02000002 9000`, blind signing enabled, detailed display enabled, application version: `0.0.2`.
+
 ## GET_PUBLIC_KEY
 
 #### Request format

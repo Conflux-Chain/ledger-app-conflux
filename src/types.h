@@ -46,6 +46,7 @@ typedef enum {
  * Enumeration with expected INS of APDU commands.
  */
 typedef enum {
+    GET_APP_INFO = 0x01,    /// get application flags, name, and version
     GET_PUBLIC_KEY = 0x02,  /// public key of corresponding BIP32 path
     SIGN_TX = 0x03,         /// sign transaction with BIP32 path
 } command_e;
