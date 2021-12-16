@@ -26,3 +26,8 @@ void ui_get_pubkey(void);
  * Display transaction on the device and ask confirmation to sign.
  */
 void ui_sign_tx(void);
+
+/**
+ * Display message hash on the device and ask confirmation to sign.
+ */
+void ui_sign_personal(void);

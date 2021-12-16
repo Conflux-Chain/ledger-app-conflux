@@ -17,9 +17,8 @@
 
 #pragma once
 
-#include "types.h"
+#include <stdbool.h>  // bool
 
-void render_settings(settings_strings_t* strings);
-void render_get_pubkey(get_pubkey_strings_t* strings);
-void render_sign_tx(sign_tx_strings_t* strings);
-void render_sign_personal(sign_personal_strings_t* strings);
+#include "common/buffer.h"
+
+void handler_sign_personal(buffer_t *cdata, bool first);

@@ -38,9 +38,9 @@
 /**
  * P1 value of first transaction data chunk.
  */
-#define P1_SIGN_TX_FIRST 0x00
+#define P1_SIGN_FIRST 0x00
 
 /**
  * P1 value of subsequent transaction data chunks.
  */
-#define P1_SIGN_TX_MORE 0x80
+#define P1_SIGN_MORE 0x80

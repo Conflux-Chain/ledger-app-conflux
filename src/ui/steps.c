@@ -126,6 +126,45 @@ UX_STEP_CB(ux_step_sign_tx_reject,
                "Reject",
            });
 
+UX_STEP_NOCB(ux_step_sign_personal_start,
+             pnn,
+             {
+                 &C_icon_certificate,
+                 "Review",
+                 "message",
+             });
+
+UX_STEP_NOCB(ux_step_sign_personal_display_signer_address,
+             bnnn_paging,
+             {
+                 .title = "Signer",
+                 .text = strings.sign_personal.signer_address,
+             });
+
+UX_STEP_NOCB(ux_step_sign_personal_display_hash,
+             bnnn_paging,
+             {
+                 .title = "Message hash",
+                 .text = strings.sign_personal.hash,
+             });
+
+UX_STEP_CB(ux_step_sign_personal_accept,
+           pbb,
+           (*g_validate_callback)(true),
+           {
+               &C_icon_validate_14,
+               "Sign",
+               "message",
+           });
+
+UX_STEP_CB(ux_step_sign_personal_reject,
+           pb,
+           (*g_validate_callback)(false),
+           {
+               &C_icon_crossmark,
+               "Reject",
+           });
+
 UX_STEP_CB(ux_step_error_blind_sign,
            pb,
            THROW(SW_DENY),

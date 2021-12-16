@@ -26,6 +26,7 @@
 #include "handler/get_app_info.h"
 #include "handler/get_public_key.h"
 #include "handler/sign_tx.h"
+#include "handler/sign_personal.h"
 
 void apdu_dispatcher(const command_t *cmd) {
     if (cmd->cla != CLA) {
@@ -62,7 +63,7 @@ void apdu_dispatcher(const command_t *cmd) {
             return handler_get_public_key(&buf, (bool) cmd->p1, (bool) cmd->p2);
 
         case SIGN_TX:
-            if (cmd->p1 != P1_SIGN_TX_FIRST && cmd->p1 != P1_SIGN_TX_MORE) {
+            if (cmd->p1 != P1_SIGN_FIRST && cmd->p1 != P1_SIGN_MORE) {
                 THROW(SW_WRONG_P1P2);
             }
 
@@ -74,7 +75,22 @@ void apdu_dispatcher(const command_t *cmd) {
             buf.size = cmd->lc;
             buf.offset = 0;
 
-            return handler_sign_tx(&buf, (bool) cmd->p1 == P1_SIGN_TX_FIRST);
+            return handler_sign_tx(&buf, (bool) cmd->p1 == P1_SIGN_FIRST);
+
+        case SIGN_PERSONAL:
+            if (cmd->p1 != P1_SIGN_FIRST && cmd->p1 != P1_SIGN_MORE) {
+                THROW(SW_WRONG_P1P2);
+            }
+
+            if (cmd->p2 != 0x00) {
+                THROW(SW_WRONG_P1P2);
+            }
+
+            buf.ptr = cmd->data;
+            buf.size = cmd->lc;
+            buf.offset = 0;
+
+            return handler_sign_personal(&buf, (bool) cmd->p1 == P1_SIGN_FIRST);
 
         default:
             THROW(SW_INS_NOT_SUPPORTED);

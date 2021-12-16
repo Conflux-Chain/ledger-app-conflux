@@ -150,3 +150,28 @@ class BoilerplateCommand:
                 raise DeviceException(error_code=sw, ins=InsType.INS_SIGN_TX)
 
         return response[:1], response[1:]
+
+    def sign_personal(self, bip32_path: str, msg: bytes, button: Button, num_clicks: int = 5) -> Tuple[int, bytes]:
+        sw: int
+        response: bytes = b""
+
+        for is_last, chunk in self.builder.sign_personal(bip32_path=bip32_path, msg=msg):
+            self.transport.send_raw(chunk)
+
+            # Make sure we wait until message is displayed
+            time.sleep(0.5)
+
+            if is_last:
+                for _ in range(num_clicks):
+                    button.right_click()
+                    time.sleep(0.5)
+
+                button.both_click()
+                time.sleep(0.5)
+
+            sw, response = self.transport.recv()  # type: int, bytes
+
+            if sw != 0x9000:
+                raise DeviceException(error_code=sw, ins=InsType.INS_SIGN_PERSONAL)
+
+        return response[:1], response[1:]

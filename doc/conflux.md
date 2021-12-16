@@ -188,3 +188,58 @@ The same transaction sent in two chunks:
 | `0xe0` | `0x03` | `0x80` | `0x00` | `0x16` | `0x5cc889f5aa624eac1f55843b9aca0081800182040580` |
 
 **Response**: `00 f9071161c2dbc19dabf54d14d42944cecacf61943a9898f4f64c8aa6d23a58b6 64ea364f092d23d7a94388f2f43cf54a86fe644d221e822210fde413d406ebb6 9000`
+
+## SIGN_PERSONAL
+
+#### Request format
+
+| CLA  | INS  | P1                          | P2   | Lc       | Le       |
+| ---- | ---- | --------------------------- | ---- | -------- | -------- |
+| `e0` | `04` | `00`: first data block      | `00` | variable | variable |
+|      |      | `80`: subsequent data block |      |          |          |
+
+##### Request payload
+
+First data block:
+
+| Description                                      | Length |
+| ------------------------------------------------ | ------ |
+| Number of BIP 32 derivations to perform (max 10) | 1      |
+| First derivation index (big endian)              | 4      |
+| ...                                              | 4      |
+| Last derivation index (big endian)               | 4      |
+| Chain ID                                         | 2      |
+| Message length                                   | 4      |
+| Message chunk                                    | var    |
+
+Subsequent data blocks:
+
+| Description   | Length |
+| ------------- | ------ |
+| Message chunk | var    |
+
+#### **Response** format
+
+| Description | Length |
+| ----------- | ------ |
+| v           | 1      |
+| r           | 32     |
+| s           | 32     |
+
+#### Examples
+
+**Command**: `e004000028058000002c800001f780000000000000000000000004050000000d48656c6c6f2c20776f726c6421`
+
+| CLA    | INS    | P1     | P2     | Lc     | Le                                                                                                           |
+| ------ | ------ | ------ | ------ | ------ | ------------------------------------------------------------------------------------------------------------ |
+| `0xe0` | `0x04` | `0x00` | `0x00` | `0x28` | `0x05 0x8000002c 0x800001f7 0x80000000 0x00000000 0x00000000 0x0405 0x0000000d 0x48656c6c6f2c20776f726c6421` |
+
+`44'/503'/0'/0/0` is encoded as `0x05 0x8000002c 0x800001f7 0x80000000 0x00000000 0x00000000`.
+
+`0x0405` stands for chain ID 1029 (Conflux mainnet).
+
+`0x0000000d` is the length of the subsequent message (13 bytes).
+
+`0x48656c6c6f2c20776f726c6421` is the message `"Hello, world!"` hex-encoded.
+
+**Response**: `00 07954c638fc7de7cdc26c69633ad0202f8a20842b49508baa3e63166961b517a 70b2e651babb1566ae53f8c1ff40c8b5426366e0d5d2de2b0fae9ed2209de53e 9000`

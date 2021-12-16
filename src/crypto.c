@@ -91,29 +91,31 @@ int crypto_derive_public_key(const uint32_t *bip32_path,
     return 0;
 }
 
-int crypto_sign_message() {
+int crypto_sign_message(uint32_t *bip32_path,
+                        uint8_t bip32_path_len,
+                        uint8_t m_hash[INT256_LENGTH],
+                        uint8_t signature[MAX_DER_SIG_LEN],
+                        uint8_t *signature_len,
+                        uint8_t *v) {
     cx_ecfp_private_key_t private_key = {0};
     uint8_t chain_code[32] = {0};
     uint32_t info = 0;
     int sig_len = 0;
 
     // derive private key according to BIP32 path
-    crypto_derive_private_key(&private_key,
-                              chain_code,
-                              G_context.sign_tx.bip32_path,
-                              G_context.sign_tx.bip32_path_len);
+    crypto_derive_private_key(&private_key, chain_code, bip32_path, bip32_path_len);
 
     BEGIN_TRY {
         TRY {
             sig_len = cx_ecdsa_sign(&private_key,
                                     CX_RND_RFC6979 | CX_LAST,
                                     CX_SHA256,
-                                    G_context.sign_tx.m_hash,
-                                    sizeof(G_context.sign_tx.m_hash),
-                                    G_context.sign_tx.signature,
-                                    sizeof(G_context.sign_tx.signature),
+                                    m_hash,
+                                    INT256_LENGTH,
+                                    signature,
+                                    MAX_DER_SIG_LEN,
                                     &info);
-            PRINTF("Signature: %.*H\n", sig_len, G_context.sign_tx.signature);
+            PRINTF("Signature: %.*H\n", sig_len, signature);
         }
         CATCH_OTHER(e) {
             THROW(e);
@@ -128,8 +130,8 @@ int crypto_sign_message() {
         return -1;
     }
 
-    G_context.sign_tx.signature_len = sig_len;
-    G_context.sign_tx.v = (uint8_t) (info & CX_ECCINFO_PARITY_ODD);
+    *signature_len = sig_len;
+    *v = (uint8_t) (info & CX_ECCINFO_PARITY_ODD);
 
     return 0;
 }

@@ -55,13 +55,49 @@ void ui_action_validate_pubkey(bool choice) {
 }
 
 void ui_action_validate_transaction(bool choice) {
+    sign_tx_ctx_t* ctx = &G_context.sign_tx;
+
     if (choice) {
         G_context.app_state = APP_STATE_IDLE;
 
-        if (crypto_sign_message() < 0) {
+        int result = crypto_sign_message(ctx->bip32_path,
+                                         ctx->bip32_path_len,
+                                         ctx->m_hash,
+                                         ctx->signature,
+                                         &ctx->signature_len,
+                                         &ctx->v);
+
+        if (result < 0) {
             THROW(SW_SIGNATURE_FAIL);
         } else {
-            helper_send_response_sig(G_context.sign_tx.signature);
+            helper_send_response_sig(G_context.sign_tx.signature, G_context.sign_tx.v);
+        }
+    } else {
+        G_context.app_state = APP_STATE_IDLE;
+        THROW(SW_DENY);
+    }
+
+    reset_app_context();
+    ui_menu_main();
+}
+
+void ui_action_sign_personal(bool choice) {
+    sign_personal_ctx_t* ctx = &G_context.sign_personal;
+
+    if (choice) {
+        G_context.app_state = APP_STATE_IDLE;
+
+        int result = crypto_sign_message(ctx->bip32_path,
+                                         ctx->bip32_path_len,
+                                         ctx->m_hash,
+                                         ctx->signature,
+                                         &ctx->signature_len,
+                                         &ctx->v);
+
+        if (result < 0) {
+            THROW(SW_SIGNATURE_FAIL);
+        } else {
+            helper_send_response_sig(ctx->signature, ctx->v);
         }
     } else {
         G_context.app_state = APP_STATE_IDLE;

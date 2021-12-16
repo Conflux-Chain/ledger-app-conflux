@@ -18,6 +18,7 @@
 #include "address.h"
 #include "cfxaddr.h"
 #include "common/bip32.h"
+#include "common/format.h"
 #include "crypto.h"
 #include "eth/utils.h"
 #include "ethUtils.h"
@@ -38,7 +39,10 @@ void render_settings(settings_strings_t *strings) {
 void render_get_pubkey_path(char *out, size_t out_len) {
     memset(out, 0, out_len);
 
-    if (!bip32_path_format(G_context.get_pubkey.bip32_path, G_context.get_pubkey.bip32_path_len, out, out_len)) {
+    if (!bip32_path_format(G_context.get_pubkey.bip32_path,
+                           G_context.get_pubkey.bip32_path_len,
+                           out,
+                           out_len)) {
         THROW(SW_DISPLAY_BIP32_PATH_FAIL);
     }
 }
@@ -58,22 +62,16 @@ void render_get_pubkey(get_pubkey_strings_t *strings) {
     render_get_pubkey_address(strings->address, sizeof(strings->address));
 }
 
-void render_sign_tx_sender(char *out, size_t out_len) {
-    uint64_t chain_id = u64_from_BE(G_context.sign_tx.transaction.chainid.value,
-                                    G_context.sign_tx.transaction.chainid.length);
-
-    if (chain_id > 0xffff) {
-        THROW(SW_CHAIN_ID_TOO_LARGE);
-    }
-
+void bip32_to_address(uint32_t *bip32_path,
+                      uint8_t bip32_path_len,
+                      uint16_t chain_id,
+                      char *out,
+                      size_t out_len) {
     // derive public key
     uint8_t raw_public_key[64];
     uint8_t chain_code[32];
 
-    crypto_derive_public_key(G_context.sign_tx.bip32_path,
-                             G_context.sign_tx.bip32_path_len,
-                             raw_public_key,
-                             chain_code);
+    crypto_derive_public_key(bip32_path, bip32_path_len, raw_public_key, chain_code);
 
     // derive address
     uint8_t address[ADDRESS_LEN_BYTES] = {0x00};
@@ -84,6 +82,21 @@ void render_sign_tx_sender(char *out, size_t out_len) {
 
     // convert to CIP-37 address
     cfxaddr_encode(address, out, out_len, chain_id);
+}
+
+void render_sign_tx_sender(char *out, size_t out_len) {
+    uint64_t chain_id = u64_from_BE(G_context.sign_tx.transaction.chainid.value,
+                                    G_context.sign_tx.transaction.chainid.length);
+
+    if (chain_id > 0xffff) {
+        THROW(SW_CHAIN_ID_TOO_LARGE);
+    }
+
+    return bip32_to_address(G_context.sign_tx.bip32_path,
+                            G_context.sign_tx.bip32_path_len,
+                            (uint16_t) chain_id,
+                            out,
+                            out_len);
 }
 
 void render_sign_tx_receiver(char *out, size_t out_len) {
@@ -243,4 +256,32 @@ void render_sign_tx(sign_tx_strings_t *strings) {
     render_sign_tx_nonce(strings->nonce, sizeof(strings->nonce));
     render_sign_tx_network(strings->network_name, sizeof(strings->network_name));
     render_sign_tx_data(strings->data, sizeof(strings->data));
+}
+
+void render_sign_personal_sender(char *out, size_t out_len) {
+    sign_personal_ctx_t *ctx = &G_context.sign_personal;
+
+    return bip32_to_address(ctx->bip32_path,
+                            ctx->bip32_path_len,
+                            (uint16_t) ctx->chain_id,
+                            out,
+                            out_len);
+}
+
+void render_sign_personal_hash(char *out, size_t out_len) {
+    sign_personal_ctx_t *ctx = &G_context.sign_personal;
+
+    uint8_t hash[32];
+    cx_hash((cx_hash_t *) &ctx->msg_hash, CX_LAST, NULL, 0, hash, 32);
+
+    strlcpy(out, "0x", out_len);
+    out += 2;
+    out_len -= 2;
+
+    format_hex(hash, sizeof(hash), out, out_len);
+}
+
+void render_sign_personal(sign_personal_strings_t *strings) {
+    render_sign_personal_sender(strings->signer_address, sizeof(strings->signer_address));
+    render_sign_personal_hash(strings->hash, sizeof(strings->hash));
 }
