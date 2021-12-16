@@ -228,8 +228,8 @@ class BoilerplateCommandBuilder:
         ----------
         bip32_path : str
             String representation of BIP32 path.
-        transaction : Transaction
-            Representation of the transaction to be signed.
+        msg : bytes
+            Hex-encoded message string.
 
         Yields
         -------
