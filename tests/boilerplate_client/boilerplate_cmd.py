@@ -74,6 +74,27 @@ class BoilerplateCommand:
 
         return response.decode("ascii")
 
+    def get_app_info(self) -> Tuple[bool, bool, int, int, int]:
+        sw, response = self.transport.exchange_raw(
+            self.builder.get_app_info()
+        )  # type: int, bytes
+
+        if sw != 0x9000:
+            raise DeviceException(error_code=sw, ins=InsType.INS_GET_VERSION)
+
+        # response = flags(1) || MAJOR (1) || MINOR (1) || PATCH (1)
+        assert len(response) == 4
+
+        flags, major, minor, patch = struct.unpack(
+            "BBBB",
+            response
+        )  # type: int, int, int, int
+
+        blind_signing_enabled = (flags & 0x01) > 0
+        detailed_display_enabled = (flags & 0x02) > 0
+
+        return blind_signing_enabled, detailed_display_enabled, major, minor, patch
+
     def get_public_key(self, bip32_path: str, display: bool = False, getChaincode: bool = False) -> Tuple[bytes, bytes]:
         sw, response = self.transport.exchange_raw(
             self.builder.get_public_key(bip32_path=bip32_path,
@@ -120,10 +141,8 @@ class BoilerplateCommand:
             if is_last:
                 for _ in range(num_clicks):
                     button.right_click()
-                    time.sleep(0.5)
 
                 button.both_click()
-                time.sleep(0.5)
 
             sw, response = self.transport.recv()  # type: int, bytes
 

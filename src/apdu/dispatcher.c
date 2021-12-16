@@ -23,6 +23,7 @@
 #include "sw.h"
 #include "common/buffer.h"
 #include "apdu_constants.h"
+#include "handler/get_app_info.h"
 #include "handler/get_public_key.h"
 #include "handler/sign_tx.h"
 
@@ -34,6 +35,17 @@ void apdu_dispatcher(const command_t *cmd) {
     buffer_t buf = {0};
 
     switch (cmd->ins) {
+        case GET_APP_INFO:
+            if (cmd->p1 != 0 || cmd->p2 != 0) {
+                THROW(SW_WRONG_P1P2);
+            }
+
+            if (cmd->lc != 0) {
+                THROW(SW_WRONG_DATA_LENGTH);
+            }
+
+            return handler_get_app_info();
+
         case GET_PUBLIC_KEY:
             if (cmd->p1 > 1 || cmd->p2 > 1) {
                 THROW(SW_WRONG_P1P2);

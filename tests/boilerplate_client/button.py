@@ -1,6 +1,8 @@
 from abc import ABCMeta, abstractmethod
 import socket
+import time
 
+WAIT_TIME_SEC = 0.5
 
 class Button(metaclass=ABCMeta):
     @abstractmethod
@@ -41,12 +43,15 @@ class ButtonTCP(Button):
 
     def right_click(self):
         self.socket.sendall(b"Rr")
+        time.sleep(WAIT_TIME_SEC)
 
     def left_click(self):
         self.socket.sendall(b"Ll")
+        time.sleep(WAIT_TIME_SEC)
 
     def both_click(self):
         self.socket.sendall(b"LRlr")
+        time.sleep(WAIT_TIME_SEC)
 
     def close(self):
         self.socket.close()

@@ -45,3 +45,9 @@
  * Maximum length of Conflux CIP-37 addresses.
  */
 #define CONFLUX_ADDRESS_MAX_LEN 52
+
+/**
+ * Application flags.
+ */
+#define APP_FLAG_BLIND_SIGNING_ENABLED    0x01
+#define APP_FLAG_DETAILED_DISPLAY_ENABLED 0x02

@@ -22,6 +22,18 @@ def toggle_blind_sign(button):
     button.right_click()
     button.both_click()
 
+def disable_blind_sign(cmd, button):
+    blind_sign_enabled, *_ = cmd.get_app_info()
+
+    if blind_sign_enabled:
+        toggle_blind_sign(button)
+
+def enable_blind_sign(cmd, button):
+    blind_sign_enabled, *_ = cmd.get_app_info()
+
+    if not blind_sign_enabled:
+        toggle_blind_sign(button)
+
 def check_transaction(cmd, button, bip32_path, tx, num_clicks=6):
     pub_key, chain_code = cmd.get_public_key(bip32_path=bip32_path)
     pk: VerifyingKey = VerifyingKey.from_string(pub_key, curve=SECP256k1, hashfunc=sha256)
@@ -39,7 +51,7 @@ def check_transaction_fails(cmd, button, bip32_path, tx, num_clicks=6):
         pass
 
 def test_sign_tx_blind_sign_disabled(cmd, button):
-    # toggle_blind_sign(button)
+    disable_blind_sign(cmd, button)
 
     # can blind sign simple transfer
     check_transaction(cmd, button, "m/44'/503'/0'/0/0", num_clicks=4, tx=Transaction())
@@ -51,7 +63,7 @@ def test_sign_tx_blind_sign_disabled(cmd, button):
     ))
 
 def test_sign_tx_blind_sign_enabled(cmd, button):
-    toggle_blind_sign(button)
+    enable_blind_sign(cmd, button)
 
     check_transaction(cmd, button, "m/44'/503'/0'/0/0", num_clicks=4, tx=Transaction())
 
