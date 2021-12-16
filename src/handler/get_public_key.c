@@ -47,7 +47,7 @@ void handler_get_public_key(buffer_t *cdata, bool display, bool get_chaincode) {
     }
 
     // parse chain ID
-    if (display && !buffer_read_u16(cdata, &ctx->chain_id, BE)) {
+    if (display && !buffer_read_u32(cdata, &ctx->chain_id, BE)) {
         THROW(SW_WRONG_DATA_LENGTH);
     }
 

@@ -48,13 +48,19 @@ void render_get_pubkey_path(char *out, size_t out_len) {
 }
 
 void render_get_pubkey_address(char *out, size_t out_len) {
+    get_pubkey_ctx_t *ctx = &G_context.get_pubkey;
+
     uint8_t address[ADDRESS_LEN_BYTES] = {0x00};
 
-    if (!address_from_pubkey(G_context.get_pubkey.raw_public_key, address, sizeof(address))) {
+    if (!address_from_pubkey(ctx->raw_public_key, address, sizeof(address))) {
         THROW(SW_DISPLAY_ADDRESS_FAIL);
     }
 
-    cfxaddr_encode(address, out, out_len, G_context.get_pubkey.chain_id);
+    if (ctx->chain_id > 0xffff) {
+        THROW(SW_CHAIN_ID_TOO_LARGE);
+    }
+
+    cfxaddr_encode(address, out, out_len, (uint16_t) ctx->chain_id);
 }
 
 void render_get_pubkey(get_pubkey_strings_t *strings) {
@@ -112,7 +118,7 @@ void render_sign_tx_receiver(char *out, size_t out_len) {
         THROW(SW_CHAIN_ID_TOO_LARGE);
     }
 
-    cfxaddr_encode(G_context.sign_tx.transaction.destination, out, out_len, chain_id);
+    cfxaddr_encode(G_context.sign_tx.transaction.destination, out, out_len, (uint16_t) chain_id);
 }
 
 void render_sign_tx_amount(char *out, size_t out_len) {
