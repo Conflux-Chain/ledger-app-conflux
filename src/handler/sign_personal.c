@@ -51,7 +51,7 @@ void handler_sign_personal(buffer_t *cdata, bool first) {
         }
 
         // parse chain ID
-        if (!buffer_read_u16(cdata, &ctx->chain_id, BE)) {
+        if (!buffer_read_u32(cdata, &ctx->chain_id, BE)) {
             THROW(SW_WRONG_DATA_LENGTH);
         }
 

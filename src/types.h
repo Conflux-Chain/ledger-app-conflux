@@ -77,7 +77,7 @@ typedef enum {
 typedef struct {
     uint32_t bip32_path[MAX_BIP32_PATH];  /// BIP32 path
     uint8_t bip32_path_len;               /// length of BIP32 path
-    uint16_t chain_id;
+    uint32_t chain_id;
     bool chaincode_requested;
     uint8_t raw_public_key[64];  /// x-coordinate (32), y-coodinate (32)
     uint8_t chain_code[32];      /// for public key derivation
@@ -103,7 +103,7 @@ typedef struct {
  */
 typedef struct {
     uint32_t remaining_length;
-    uint16_t chain_id;
+    uint32_t chain_id;
     uint32_t bip32_path[MAX_BIP32_PATH];  /// BIP32 path
     uint8_t bip32_path_len;               /// length of BIP32 path
     uint8_t m_hash[32];                   /// message hash digest

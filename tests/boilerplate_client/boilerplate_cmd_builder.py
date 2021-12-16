@@ -178,7 +178,7 @@ class BoilerplateCommandBuilder:
         cdata: bytes = b"".join([
             len(bip32_paths).to_bytes(1, byteorder="big"),
             *bip32_paths,
-            (1029).to_bytes(2, byteorder="big"),
+            (1029).to_bytes(4, byteorder="big"),
         ])
 
         return self.serialize(cla=self.CLA,
@@ -242,7 +242,7 @@ class BoilerplateCommandBuilder:
         cdata: bytes = b"".join([
             len(bip32_paths).to_bytes(1, byteorder="big"),
             *bip32_paths,
-            (1029).to_bytes(2, byteorder="big"),
+            (1029).to_bytes(4, byteorder="big"),
             len(msg).to_bytes(4, byteorder="big"),
             msg,
         ])
