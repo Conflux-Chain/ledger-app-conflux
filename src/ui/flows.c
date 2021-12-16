@@ -61,4 +61,17 @@ UX_FLOW(ux_flow_sign_tx_detailed,
         &ux_step_sign_tx_accept,
         &ux_step_sign_tx_reject);
 
+UX_FLOW(ux_flow_sign_personal_simple,
+        &ux_step_sign_personal_start,
+        &ux_step_sign_personal_display_hash,
+        &ux_step_sign_personal_accept,
+        &ux_step_sign_personal_reject);
+
+UX_FLOW(ux_flow_sign_personal_detailed,
+        &ux_step_sign_personal_start,
+        &ux_step_sign_personal_display_signer_address,
+        &ux_step_sign_personal_display_hash,
+        &ux_step_sign_personal_accept,
+        &ux_step_sign_personal_reject);
+
 UX_FLOW(ux_flow_error_blind_sign, &ux_step_error_blind_sign);

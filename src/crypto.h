@@ -6,6 +6,8 @@
 #include "os.h"
 #include "cx.h"
 
+#include "constants.h"
+
 /**
  * Derive private key given BIP32 path.
  *
@@ -58,7 +60,12 @@ int crypto_init_public_key(cx_ecfp_private_key_t *private_key,
  * @throw INVALID_PARAMETER
  *
  */
-int crypto_sign_message(void);
+int crypto_sign_message(uint32_t *bip32_path,
+                        uint8_t bip32_path_len,
+                        uint8_t m_hash[32],
+                        uint8_t signature[MAX_DER_SIG_LEN],
+                        uint8_t *signature_len,
+                        uint8_t *v);
 
 int crypto_derive_public_key(const uint32_t *bip32_path,
                              uint8_t bip32_path_len,

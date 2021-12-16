@@ -61,7 +61,7 @@ void ui_sign_tx() {
         THROW(SW_BAD_STATE);
     }
 
-    sign_tx_ctx_t *ctx = &G_context.sign_tx;
+    sign_tx_ctx_t* ctx = &G_context.sign_tx;
 
     // no blind signing
     if (ctx->transaction.data_present && !N_storage.settings.allow_blind_sign) {
@@ -69,12 +69,7 @@ void ui_sign_tx() {
     }
 
     // store the hash
-    cx_hash((cx_hash_t*) &ctx->sha3,
-            CX_LAST,
-            ctx->m_hash,
-            0,
-            ctx->m_hash,
-            32);
+    cx_hash((cx_hash_t*) &ctx->sha3, CX_LAST, ctx->m_hash, 0, ctx->m_hash, 32);
 
     PRINTF("Hash: %.*H\n", INT256_LENGTH, ctx->m_hash);
 
@@ -86,5 +81,27 @@ void ui_sign_tx() {
         return ux_flow_init(0, ux_flow_sign_tx_detailed, NULL);
     } else {
         return ux_flow_init(0, ux_flow_sign_tx_simple, NULL);
+    }
+}
+
+void ui_sign_personal() {
+    if (G_context.app_state != APP_STATE_SIGNING_PERSONAL) {
+        G_context.app_state = APP_STATE_IDLE;
+        THROW(SW_BAD_STATE);
+    }
+
+    // no blind signing
+    if (!N_storage.settings.allow_blind_sign) {
+        return ux_flow_init(0, ux_flow_error_blind_sign, NULL);
+    }
+
+    // display transaction for review
+    render_sign_personal(&strings.sign_personal);
+    g_validate_callback = &ui_action_sign_personal;
+
+    if (N_storage.settings.allow_detailed_display) {
+        return ux_flow_init(0, ux_flow_sign_personal_detailed, NULL);
+    } else {
+        return ux_flow_init(0, ux_flow_sign_personal_simple, NULL);
     }
 }

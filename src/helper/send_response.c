@@ -44,12 +44,12 @@ int helper_send_response_pubkey() {
     return io_send_response(&(const buffer_t){.ptr = resp, .size = offset, .offset = 0}, SW_OK);
 }
 
-void helper_send_response_sig(const uint8_t *signature) {
+void helper_send_response_sig(const uint8_t *signature, uint8_t v) {
     uint8_t resp[65] = {0};
     size_t offset = 0;
 
     // v
-    resp[offset++] = G_context.sign_tx.v;
+    resp[offset++] = v;
 
     // r
     uint8_t xoffset = 4;  // point to r value

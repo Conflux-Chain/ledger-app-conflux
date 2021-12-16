@@ -32,8 +32,7 @@ class InsType(enum.IntEnum):
     INS_GET_APP_INFO = 0x01
     INS_GET_PUBLIC_KEY = 0x02
     INS_SIGN_TX = 0x03
-    INS_GET_VERSION = 0x04
-    INS_GET_APP_NAME = 0x05
+    INS_SIGN_PERSONAL = 0x04
 
 
 class BoilerplateCommandBuilder:
@@ -217,6 +216,42 @@ class BoilerplateCommandBuilder:
         for i, (is_last, chunk) in enumerate(chunkify(cdata, MAX_APDU_LEN)):
             yield is_last, self.serialize(cla=self.CLA,
                                         ins=InsType.INS_SIGN_TX,
+                                        p1 = 0x00 if is_first else 0x80,
+                                        p2=0x00,
+                                        cdata=chunk)
+            is_first = False
+
+    def sign_personal(self, bip32_path: str, msg: bytes) -> Iterator[Tuple[bool, bytes]]:
+        """Command builder for INS_SIGN_PERSONAL.
+
+        Parameters
+        ----------
+        bip32_path : str
+            String representation of BIP32 path.
+        transaction : Transaction
+            Representation of the transaction to be signed.
+
+        Yields
+        -------
+        bytes
+            APDU command chunk for INS_SIGN_PERSONAL.
+
+        """
+        bip32_paths: List[bytes] = bip32_path_from_string(bip32_path)
+
+        cdata: bytes = b"".join([
+            len(bip32_paths).to_bytes(1, byteorder="big"),
+            *bip32_paths,
+            (1029).to_bytes(2, byteorder="big"),
+            len(msg).to_bytes(4, byteorder="big"),
+            msg,
+        ])
+
+        is_first = True
+
+        for i, (is_last, chunk) in enumerate(chunkify(cdata, MAX_APDU_LEN)):
+            yield is_last, self.serialize(cla=self.CLA,
+                                        ins=InsType.INS_SIGN_PERSONAL,
                                         p1 = 0x00 if is_first else 0x80,
                                         p2=0x00,
                                         cdata=chunk)

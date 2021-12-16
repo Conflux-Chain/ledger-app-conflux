@@ -7,32 +7,7 @@ from ecdsa.util import sigdecode_string
 
 from boilerplate_client.exception import DeviceException
 from boilerplate_client.transaction import Transaction
-from boilerplate_client.utils import (UINT64_MAX)
-
-def toggle_blind_sign(button):
-    # enter Settings
-    button.right_click()
-    button.both_click()
-
-    # toggle
-    button.both_click()
-
-    # back
-    button.right_click()
-    button.right_click()
-    button.both_click()
-
-def disable_blind_sign(cmd, button):
-    blind_sign_enabled, *_ = cmd.get_app_info()
-
-    if blind_sign_enabled:
-        toggle_blind_sign(button)
-
-def enable_blind_sign(cmd, button):
-    blind_sign_enabled, *_ = cmd.get_app_info()
-
-    if not blind_sign_enabled:
-        toggle_blind_sign(button)
+from boilerplate_client.utils import (UINT64_MAX, enable_blind_sign, disable_blind_sign)
 
 def check_transaction(cmd, button, bip32_path, tx, num_clicks=6):
     pub_key, chain_code = cmd.get_public_key(bip32_path=bip32_path)

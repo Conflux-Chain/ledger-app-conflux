@@ -49,6 +49,7 @@ typedef enum {
     GET_APP_INFO = 0x01,    /// get application flags, name, and version
     GET_PUBLIC_KEY = 0x02,  /// public key of corresponding BIP32 path
     SIGN_TX = 0x03,         /// sign transaction with BIP32 path
+    SIGN_PERSONAL = 0x04,   /// sign a personal message
 } command_e;
 
 /**
@@ -67,6 +68,7 @@ typedef enum {
     APP_STATE_IDLE,
     APP_STATE_GETTING_PUBKEY,
     APP_STATE_SIGNING_TX,
+    APP_STATE_SIGNING_PERSONAL,
 } app_state_t;
 
 /**
@@ -97,6 +99,22 @@ typedef struct {
 } sign_tx_ctx_t;
 
 /**
+ * Structure for personal sign context information.
+ */
+typedef struct {
+    uint32_t remaining_length;
+    uint16_t chain_id;
+    uint32_t bip32_path[MAX_BIP32_PATH];  /// BIP32 path
+    uint8_t bip32_path_len;               /// length of BIP32 path
+    uint8_t m_hash[32];                   /// message hash digest
+    uint8_t signature[MAX_DER_SIG_LEN];   /// transaction signature encoded in DER
+    uint8_t signature_len;                /// length of transaction signature
+    uint8_t v;                            /// parity of y-coordinate of R in ECDSA signature
+    cx_sha3_t sha3;
+    cx_sha256_t msg_hash;
+} sign_personal_ctx_t;
+
+/**
  * Structure for global context.
  */
 typedef struct {
@@ -104,6 +122,7 @@ typedef struct {
     union {
         get_pubkey_ctx_t get_pubkey;
         sign_tx_ctx_t sign_tx;
+        sign_personal_ctx_t sign_personal;
     };
 } global_ctx_t;
 
@@ -127,8 +146,14 @@ typedef struct sign_tx_strings_t {
     char data[FUNCTION_SELECTOR_MAX_SIZE];
 } sign_tx_strings_t;
 
+typedef struct sign_personal_strings_t {
+    char signer_address[CONFLUX_ADDRESS_MAX_LEN];
+    char hash[67];  // 2*32 + 2 (0x) + 1 (\0)
+} sign_personal_strings_t;
+
 typedef union {
     settings_strings_t settings;
     get_pubkey_strings_t get_pubkey;
     sign_tx_strings_t sign_tx;
+    sign_personal_strings_t sign_personal;
 } strings_t;

@@ -1,7 +1,6 @@
 from io import BytesIO
 from typing import List, Optional, Literal
 
-
 UINT64_MAX: int = 18446744073709551615
 UINT32_MAX: int = 4294967295
 UINT16_MAX: int = 65535
@@ -73,3 +72,31 @@ def read_uint(buf: BytesIO,
         raise ValueError(f"Can't read u{bit_len} in buffer!")
 
     return int.from_bytes(b, byteorder)
+
+
+def toggle_blind_sign(button):
+    # enter Settings
+    button.right_click()
+    button.both_click()
+
+    # toggle
+    button.both_click()
+
+    # back
+    button.right_click()
+    button.right_click()
+    button.both_click()
+
+
+def disable_blind_sign(cmd, button):
+    blind_sign_enabled, *_ = cmd.get_app_info()
+
+    if blind_sign_enabled:
+        toggle_blind_sign(button)
+
+
+def enable_blind_sign(cmd, button):
+    blind_sign_enabled, *_ = cmd.get_app_info()
+
+    if not blind_sign_enabled:
+        toggle_blind_sign(button)

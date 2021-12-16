@@ -26,5 +26,7 @@ extern flow_t ux_flow_error_blind_sign;
 extern flow_t ux_flow_get_pubkey;
 extern flow_t ux_flow_main_menu;
 extern flow_t ux_flow_settings;
+extern flow_t ux_flow_sign_personal_detailed;
+extern flow_t ux_flow_sign_personal_simple;
 extern flow_t ux_flow_sign_tx_detailed;
 extern flow_t ux_flow_sign_tx_simple;
