@@ -76,8 +76,7 @@ def test_sign_tx_blind_sign_enabled(cmd, button):
         data= ''
     ))
 
-    # do not support > 0xffff chain ID
-    check_transaction_fails(cmd, button, "m/44'/503'/0'/0/0", num_clicks=0, tx=Transaction(
+    check_transaction(cmd, button, "m/44'/503'/0'/0/3", num_clicks=7, tx=Transaction(
         to="10109fC8DF283027b6285cc889F5aA624EaC1F55",
-        chainId=0x10000
+        chainId=0xffffffff
     ))
