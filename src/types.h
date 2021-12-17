@@ -6,6 +6,7 @@
 #include "constants.h"
 #include "common/bip32.h"
 #include "eth/rlp_parser.h"
+#include "libcfxaddr/cfxaddr.h"
 
 /**
  * Global application settings.
@@ -133,12 +134,12 @@ typedef struct settings_strings_t {
 
 typedef struct get_pubkey_strings_t {
     char bip32_path[60];
-    char address[CONFLUX_ADDRESS_MAX_LEN];
+    char address[CFXADDR_MAX_LENGTH + 1];
 } get_pubkey_strings_t;
 
 typedef struct sign_tx_strings_t {
-    char sender_address[CONFLUX_ADDRESS_MAX_LEN];
-    char receiver_address[CONFLUX_ADDRESS_MAX_LEN];
+    char sender_address[CFXADDR_MAX_LENGTH + 1];
+    char receiver_address[CFXADDR_MAX_LENGTH + 1];
     char full_amount[79];  // 2^256 is 78 digits long
     char max_fee[50];
     char nonce[8];  // 10M tx per account ought to be enough for everybody
@@ -147,7 +148,7 @@ typedef struct sign_tx_strings_t {
 } sign_tx_strings_t;
 
 typedef struct sign_personal_strings_t {
-    char signer_address[CONFLUX_ADDRESS_MAX_LEN];
+    char signer_address[CFXADDR_MAX_LENGTH + 1];
     char hash[67];  // 2*32 + 2 (0x) + 1 (\0)
 } sign_personal_strings_t;
 

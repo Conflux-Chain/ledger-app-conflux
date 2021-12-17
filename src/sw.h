@@ -61,9 +61,9 @@
  */
 #define SW_BAD_STATE 0xB007
 /**
- * Status word for overly large chain ID.
+ * Status word for failing CIP37 conversion.
  */
-#define SW_CHAIN_ID_TOO_LARGE 0xB008
+#define SW_CIP37_CONVERSION_FAIL 0xB008
 /**
  * Status word for signature fail.
  */

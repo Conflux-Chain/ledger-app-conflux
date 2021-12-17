@@ -16,7 +16,7 @@
  *****************************************************************************/
 
 #include "address.h"
-#include "libcfx/cfxaddr.h"
+#include "libcfxaddr/cfxaddr.h"
 #include "common/bip32.h"
 #include "common/format.h"
 #include "crypto.h"
@@ -56,11 +56,9 @@ void render_get_pubkey_address(char *out, size_t out_len) {
         THROW(SW_DISPLAY_ADDRESS_FAIL);
     }
 
-    if (ctx->chain_id > 0xffff) {
-        THROW(SW_CHAIN_ID_TOO_LARGE);
-    }
-
-    cfxaddr_encode(address, out, out_len, (uint16_t) ctx->chain_id);
+    if (cfxaddr_encode(address, out, out_len, ctx->chain_id) != CFXADDR_SUCCESS) {
+        THROW(SW_CIP37_CONVERSION_FAIL);
+    };
 }
 
 void render_get_pubkey(get_pubkey_strings_t *strings) {
@@ -70,7 +68,7 @@ void render_get_pubkey(get_pubkey_strings_t *strings) {
 
 void bip32_to_address(uint32_t *bip32_path,
                       uint8_t bip32_path_len,
-                      uint16_t chain_id,
+                      uint32_t chain_id,
                       char *out,
                       size_t out_len) {
     // derive public key
@@ -87,38 +85,34 @@ void bip32_to_address(uint32_t *bip32_path,
     }
 
     // convert to CIP-37 address
-    cfxaddr_encode(address, out, out_len, chain_id);
+    if (cfxaddr_encode(address, out, out_len, chain_id) != CFXADDR_SUCCESS) {
+        THROW(SW_CIP37_CONVERSION_FAIL);
+    };
 }
 
 void render_sign_tx_sender(char *out, size_t out_len) {
-    uint64_t chain_id = u64_from_BE(G_context.sign_tx.transaction.chainid.value,
-                                    G_context.sign_tx.transaction.chainid.length);
+    sign_tx_ctx_t *ctx = &G_context.sign_tx;
 
-    if (chain_id > 0xffff) {
-        THROW(SW_CHAIN_ID_TOO_LARGE);
-    }
+    uint32_t chain_id =
+        (uint32_t) u64_from_BE(ctx->transaction.chainid.value, ctx->transaction.chainid.length);
 
-    return bip32_to_address(G_context.sign_tx.bip32_path,
-                            G_context.sign_tx.bip32_path_len,
-                            (uint16_t) chain_id,
-                            out,
-                            out_len);
+    return bip32_to_address(ctx->bip32_path, ctx->bip32_path_len, chain_id, out, out_len);
 }
 
 void render_sign_tx_receiver(char *out, size_t out_len) {
-    if (G_context.sign_tx.transaction.destinationLength == 0) {
+    sign_tx_ctx_t *ctx = &G_context.sign_tx;
+
+    if (ctx->transaction.destinationLength == 0) {
         strlcpy(out, "New contract", out_len);
         return;
     }
 
-    uint64_t chain_id = u64_from_BE(G_context.sign_tx.transaction.chainid.value,
-                                    G_context.sign_tx.transaction.chainid.length);
+    uint32_t chain_id =
+        (uint32_t) u64_from_BE(ctx->transaction.chainid.value, ctx->transaction.chainid.length);
 
-    if (chain_id > 0xffff) {
-        THROW(SW_CHAIN_ID_TOO_LARGE);
-    }
-
-    cfxaddr_encode(G_context.sign_tx.transaction.destination, out, out_len, (uint16_t) chain_id);
+    if (cfxaddr_encode(ctx->transaction.destination, out, out_len, chain_id) != CFXADDR_SUCCESS) {
+        THROW(SW_CIP37_CONVERSION_FAIL);
+    };
 }
 
 void render_sign_tx_amount(char *out, size_t out_len) {
@@ -266,12 +260,7 @@ void render_sign_tx(sign_tx_strings_t *strings) {
 
 void render_sign_personal_sender(char *out, size_t out_len) {
     sign_personal_ctx_t *ctx = &G_context.sign_personal;
-
-    return bip32_to_address(ctx->bip32_path,
-                            ctx->bip32_path_len,
-                            (uint16_t) ctx->chain_id,
-                            out,
-                            out_len);
+    return bip32_to_address(ctx->bip32_path, ctx->bip32_path_len, ctx->chain_id, out, out_len);
 }
 
 void render_sign_personal_hash(char *out, size_t out_len) {
