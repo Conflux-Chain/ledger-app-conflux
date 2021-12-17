@@ -20,7 +20,6 @@
 #include <stdbool.h>  // bool
 #include <string.h>   // memmove
 
-#include "os.h"
 #include "cx.h"
 
 #include "address.h"

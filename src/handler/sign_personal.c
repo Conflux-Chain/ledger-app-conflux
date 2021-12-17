@@ -15,7 +15,6 @@
  *  limitations under the License.
  *****************************************************************************/
 
-#include "os.h"
 #include "cx.h"
 
 #include "sign_personal.h"

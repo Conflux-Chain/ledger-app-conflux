@@ -1,7 +1,5 @@
 #pragma once
 
-#include "os.h"
-
 #include "../common/macros.h"
 
 /**

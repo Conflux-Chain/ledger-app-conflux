@@ -19,9 +19,6 @@
 #include <stddef.h>   // size_t
 #include <string.h>   // memset, explicit_bzero
 
-#include "os.h"
-#include "cx.h"
-
 #include "get_public_key.h"
 #include "globals.h"
 #include "sw.h"

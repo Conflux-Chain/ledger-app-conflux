@@ -15,8 +15,6 @@
  *  limitations under the License.
  *****************************************************************************/
 
-#include "os.h"
-
 #include "actions.h"
 #include "crypto.h"
 #include "globals.h"

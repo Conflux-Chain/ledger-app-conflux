@@ -21,7 +21,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "os.h"
 #include "cx.h"
 
 struct parser_context_t;

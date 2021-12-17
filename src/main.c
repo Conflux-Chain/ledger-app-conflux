@@ -54,7 +54,7 @@ void init_storage() {
 
 void reset_app_context() {
     G_context.app_state = APP_STATE_IDLE;
-    memset((uint8_t *) &G_context, 0, sizeof(G_context));
+    explicit_bzero((uint8_t *) &G_context, sizeof(G_context));
     ui_menu_main();
 }
 
@@ -82,6 +82,7 @@ void app_main() {
 
                 // Receive command bytes in G_io_apdu_buffer
                 if ((input_len = io_recv_command()) < 0) {
+                    CLOSE_TRY;
                     return;
                 }
 
@@ -89,6 +90,7 @@ void app_main() {
                 if (!apdu_parser(&cmd, G_io_apdu_buffer, input_len)) {
                     PRINTF("=> /!\\ BAD LENGTH: %.*H\n", input_len, G_io_apdu_buffer);
                     io_send_sw(SW_WRONG_DATA_LENGTH);
+                    CLOSE_TRY;
                     continue;
                 }
 

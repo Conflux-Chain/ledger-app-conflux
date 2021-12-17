@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 
+#include "os.h"  // PIC
 #include "ux.h"
 
 #include "io.h"

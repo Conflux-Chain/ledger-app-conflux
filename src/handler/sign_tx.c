@@ -15,9 +15,6 @@
  *  limitations under the License.
  *****************************************************************************/
 
-#include "os.h"
-#include "cx.h"
-
 #include "sign_tx.h"
 #include "sw.h"
 #include "globals.h"

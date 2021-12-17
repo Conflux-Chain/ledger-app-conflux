@@ -7,7 +7,7 @@ from ecdsa.util import sigdecode_string
 
 from boilerplate_client.exception import DeviceException
 from boilerplate_client.transaction import Transaction
-from boilerplate_client.utils import (UINT64_MAX, enable_blind_sign, disable_blind_sign)
+from boilerplate_client.utils import UINT64_MAX, enable_blind_sign, disable_blind_sign
 
 def check_transaction(cmd, button, bip32_path, tx, num_clicks=6):
     pub_key, chain_code = cmd.get_public_key(bip32_path=bip32_path)

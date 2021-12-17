@@ -460,7 +460,7 @@ static parser_status_t processTxInternal(parser_context_t *context) {
 }
 
 parser_status_t process_tx_chunk(parser_context_t *context, const uint8_t *buffer, uint32_t length) {
-    parser_status_t result;
+    volatile parser_status_t result;
     BEGIN_TRY {
         TRY {
             context->workBuffer = buffer;
