@@ -16,7 +16,7 @@
  *****************************************************************************/
 
 #include "address.h"
-#include "cfxaddr.h"
+#include "libcfx/cfxaddr.h"
 #include "common/bip32.h"
 #include "common/format.h"
 #include "crypto.h"

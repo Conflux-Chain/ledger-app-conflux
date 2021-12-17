@@ -45,7 +45,7 @@ extern global_ctx_t G_context;
  * Persistent storage.
  */
 extern const internal_storage_t N_storage_real;
-#define N_storage (*( volatile internal_storage_t *)PIC(&N_storage_real))
+#define N_storage (*(volatile internal_storage_t *) PIC(&N_storage_real))
 
 /**
  * Strings rendered for display.

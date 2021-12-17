@@ -27,7 +27,12 @@
 bool apdu_parser(command_t *cmd, uint8_t *buf, size_t buf_len) {
     // Check minimum length and Lc field of APDU command
     if (buf_len < OFFSET_CDATA || buf_len - OFFSET_CDATA != buf[OFFSET_LC]) {
-        PRINTF("Parsing status: %d, %d, %d, %d.\n", buf_len, OFFSET_CDATA, buf_len - OFFSET_CDATA, buf[OFFSET_LC]);
+        PRINTF("Parsing status: %d, %d, %d, %d.\n",
+               buf_len,
+               OFFSET_CDATA,
+               buf_len - OFFSET_CDATA,
+               buf[OFFSET_LC]);
+
         return false;
     }
 

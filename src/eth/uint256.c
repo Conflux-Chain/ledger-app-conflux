@@ -355,7 +355,8 @@ void mul256(uint256_t *number1, uint256_t *number2, uint256_t *target) {
     }
     cx_math_mult(result, num1, num2, sizeof(num1));
     for (uint8_t i = 0; i < 4; i++) {
-        eth_read_u64_be(result + 32 + i * sizeof(uint64_t), &target->elements[i / 2].elements[i % 2]);
+        eth_read_u64_be(result + 32 + i * sizeof(uint64_t),
+                        &target->elements[i / 2].elements[i % 2]);
     }
 }
 

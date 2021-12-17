@@ -40,15 +40,12 @@ strings_t strings;
 void init_storage() {
     if (N_storage.initialized != 0x01) {
         internal_storage_t storage;
+
         storage.settings.allow_blind_sign = BlindSignDisabled;
         storage.settings.allow_detailed_display = DisplayStyleSimple;
         storage.initialized = 0x01;
 
-        nvm_write(
-            (internal_storage_t*)&N_storage,
-            (void*)&storage,
-            sizeof(internal_storage_t)
-        );
+        nvm_write((internal_storage_t *) &N_storage, (void *) &storage, sizeof(internal_storage_t));
     }
 }
 
