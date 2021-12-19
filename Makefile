@@ -31,15 +31,15 @@ APP_LOAD_PARAMS += --path "44'/503'"
 APP_LOAD_PARAMS += $(COMMON_LOAD_PARAMS)
 
 APPNAME      = "Conflux"
-APPVERSION_M = 0
+APPVERSION_M = 1
 APPVERSION_N = 0
-APPVERSION_P = 3
+APPVERSION_P = 0
 APPVERSION   = "$(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)"
 
 ifeq ($(TARGET_NAME),TARGET_NANOX)
-    ICONNAME=icons/nanox_app_boilerplate.gif
+    ICONNAME=icons/nanox_app_conflux.gif
 else
-    ICONNAME=icons/nanos_app_boilerplate.gif
+    ICONNAME=icons/nanos_app_conflux.gif
 endif
 
 all: default
