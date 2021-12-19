@@ -29,10 +29,10 @@ UX_STEP_NOCB(ux_step_get_pubkey_start,
              });
 
 UX_STEP_NOCB(ux_step_get_pubkey_display_path,
-             bnnn_paging,
+             bn,
              {
-                 .title = "Path",
-                 .text = strings.get_pubkey.bip32_path,
+                 "Path",
+                 strings.get_pubkey.bip32_path,
              });
 
 UX_STEP_NOCB(ux_step_get_pubkey_display_address,
@@ -189,17 +189,20 @@ UX_STEP_CB(ux_step_back,
            });
 
 UX_STEP_CB(ux_step_settings_blind_sign,
-           bnnn_paging,
+           bn,
            ui_action_toggle_settings_blind_signing(),
            {
-               .title = "Blind signing",
-               .text = strings.settings.blind_signing,
+               "Blind signing",
+               strings.settings.blind_signing,
            });
 
 UX_STEP_CB(ux_step_settings_display_style,
-           bnnn_paging,
+           bn,
            ui_action_toggle_settings_detailed_display(),
-           {.title = "Display style", .text = strings.settings.display_style});
+           {
+               "Display style",
+               strings.settings.display_style,
+           });
 
 UX_STEP_NOCB(ux_step_menu_ready,
              pnn,
