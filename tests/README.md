@@ -12,13 +12,13 @@ pip install -r requirements.txt
 First start your application with Speculos
 
 ```
-./path/to/speculos.py /path/to/app-boilerplate/bin/app.elf --ontop --sdk 1.6
+./path/to/speculos.py /path/to/app-conflux/bin/app.elf --display headless --apdu-port 9999 --button-port 42000 /speculos/app-conflux/bin/app.elf --seed "clown disagree excess state tray tongue use fat teach woman dizzy include"
 ```
 
 then in the `tests` folder run
 
 ```
-pytest
+pytest --headless
 ```
 
 ### Launch with your Nano S/X

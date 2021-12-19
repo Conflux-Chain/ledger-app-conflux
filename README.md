@@ -1,22 +1,19 @@
-# Ledger Boilerplate Application
+# Conflux app for Ledger Wallet
 
-This is a boilerplate application which can be forked to start a new project for the Ledger Nano S/X.
+## Overview
 
-## Prerequisite
+This app adds support for the Conflux native token CFX to the Ledger Nano S/X hardware wallet.
 
-Be sure to have your environment correctly set up (see [Getting Started](https://developers.ledger.com/docs/nano-app/introduction/)) and [ledgerblue](https://pypi.org/project/ledgerblue/) and installed.
+Current Features:
 
-If you want to benefit from [vscode](https://code.visualstudio.com/) integration, it's recommended to move the toolchain in `/opt` and set `BOLOS_ENV` environment variable as follows
+- Public key queries
+- Parse, display, and sign simple CFX transfer transactions
+- Blind sign arbitrary contract-call transactions (enabled via the Settings)
+- Sign arbitrary data (`personal_sign`)
 
-```
-BOLOS_ENV=/opt/bolos-devenv
-```
+## Prerequisites
 
-and do the same with `BOLOS_SDK` environment variable
-
-```
-BOLOS_SDK=/opt/nanos-secure-sdk
-```
+Be sure to have your environment correctly set up (see [Getting Started](https://developers.ledger.com/docs/nano-app/introduction/)) and [ledgerblue](https://pypi.org/project/ledgerblue/) installed.
 
 ## Compilation
 
@@ -27,7 +24,7 @@ make load     # load the app on the Nano using ledgerblue
 
 ## Documentation
 
-High level documentation such as [APDU](doc/APDU.md), [commands](doc/COMMANDS.md) and [transaction serialization](doc/TRANSACTION.md) are included in developer documentation which can be generated with [doxygen](https://www.doxygen.nl)
+High level documentation such as [APDU](doc/APDU.md), and [commands](doc/COMMANDS.md) are included in the developer documentation which can be generated with [doxygen](https://www.doxygen.nl)
 
 ```
 doxygen .doxygen/Doxyfile
@@ -41,14 +38,9 @@ The flow processed in [GitHub Actions](https://github.com/features/actions) is t
 
 - Code formatting with [clang-format](http://clang.llvm.org/docs/ClangFormat.html)
 - Compilation of the application for Ledger Nano S in [ledger-app-builder](https://github.com/LedgerHQ/ledger-app-builder)
-- Unit tests of C functions with [cmocka](https://cmocka.org/) (see [unit-tests/](unit-tests/))
 - End-to-end tests with [Speculos](https://github.com/LedgerHQ/speculos) emulator (see [tests/](tests/))
-- Code coverage with [gcov](https://gcc.gnu.org/onlinedocs/gcc/Gcov.html)/[lcov](http://ltp.sourceforge.net/coverage/lcov.php) and upload to [codecov.io](https://about.codecov.io)
-- Documentation generation with [doxygen](https://www.doxygen.nl)
 
-It outputs 4 artifacts:
+It outputs 2 artifacts:
 
-- `boilerplate-app-debug` within output files of the compilation process in debug mode
+- `conflux-app-debug` within output files of the compilation process in debug mode
 - `speculos-log` within APDU command/response when executing end-to-end tests
-- `code-coverage` within HTML details of code coverage
-- `documentation` within HTML auto-generated documentation
