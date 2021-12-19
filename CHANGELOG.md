@@ -9,5 +9,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial commit with the brand new Conflux application
+- Initial implementation of the brand new Conflux application.
 - This version supports the following commands: `GET_APP_INFO`, `GET_PUBLIC_KEY`, `SIGN_TX`, `SIGN_PERSONAL`.
