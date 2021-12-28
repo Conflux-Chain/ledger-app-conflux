@@ -94,7 +94,7 @@ Flags: `b000000YX`
 
 Notice the chain ID (`0x00000405 ~ 1029`, aka mainnet) at the end.
 
-**Response**: `41 047b88d05ba40b8e6ed961b526ab68c7051d2a8602862c788f84416cc37e9c0a5c4213b20660a6591cd53ad81d5b68499acb835ac7a08c88e18bf8f4998061eb4a 20 20b19d018f0bf5264aa6a0953a22d2cc432205fc022adfeb0160b1cad0b4ab8b 9000`
+**Response**: `41 047b88d05ba40b8e6ed961b526ab68c7051d2a8602862c788f84416cc37e9c0a5c4213b20660a6591cd53ad81d5b68499acb835ac7a08c88e18bf8f4998061eb4a 9000`
 
 ---
 
@@ -112,7 +112,7 @@ Notice the chain ID (`0x00000405 ~ 1029`, aka mainnet) at the end.
 
 | CLA  | INS  | P1                                      | P2   | Lc       | Le       |
 | ---- | ---- | --------------------------------------- | ---- | -------- | -------- |
-| `E0` | `03` | `00`: first transaction data block      | `00` | variable | variable |
+| `e0` | `03` | `00`: first transaction data block      | `00` | variable | variable |
 |      |      | `80`: subsequent transaction data block |      |          |          |
 
 ##### Request payload
