@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "apdu/types.h"
 #include "dispatcher.h"
 #include "types.h"
 #include "sw.h"

@@ -19,10 +19,14 @@
 #include <stdint.h>   // uint*_t
 #include <stdbool.h>  // bool
 
-#include "parser.h"
-#include "../types.h"
-#include "apdu_constants.h"
-#include "../globals.h"
+#include "apdu/apdu_constants.h"
+#include "apdu/parser.h"
+#include "apdu/types.h"
+#include "types.h"
+
+#ifndef PRINTF
+#define PRINTF(...)
+#endif
 
 bool apdu_parser(command_t *cmd, uint8_t *buf, size_t buf_len) {
     // Check minimum length and Lc field of APDU command
