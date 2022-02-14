@@ -37,10 +37,15 @@ add_compile_definitions(TEST)
 
 include_directories(../src)
 
+add_executable(test_bip32 test_bip32.c)
 add_executable(test_apdu_parser test_apdu_parser.c)
 
 add_library(apdu_parser SHARED ../src/apdu/parser.c)
+add_library(bip32 SHARED ../src/common/bip32.c)
+add_library(read SHARED ../src/common/read.c)
 
+target_link_libraries(test_bip32 PUBLIC cmocka gcov bip32 read)
 target_link_libraries(test_apdu_parser PUBLIC cmocka gcov apdu_parser)
 
+add_test(test_bip32 test_bip32)
 add_test(test_apdu_parser test_apdu_parser)
